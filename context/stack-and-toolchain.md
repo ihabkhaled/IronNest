@@ -16,11 +16,13 @@
 - **@nestjs/swagger** — OpenAPI.
 - **@nestjs/throttler** — rate limiting.
 - **@nestjs/jwt + @nestjs/passport + passport-jwt** — auth building blocks.
-- **@nestjs/throttler** — rate limiting (wired as a global guard from config).
-- **class-validator + class-transformer** — DTO validation (primary). Zod is supported via a custom pipe (see [`/rules/05-dto-and-validation.md`](../rules/05-dto-and-validation.md)).
-- **nestjs-pino + pino + pino-http** — structured logging for every request (redaction, 4xx→`warn` / 5xx→`error`); `pino-pretty` for dev.
-- **@fastify/helmet + @fastify/cors + @fastify/cookie** — security headers, CORS, cookie parsing on the Fastify platform.
+- **@nestjs/throttler** — rate limiting, owned by [`src/core/rate-limit`](../src/core/rate-limit).
+- **class-validator + class-transformer** — DTO validation (primary), owned by [`src/core/validation`](../src/core/validation); DTOs use its re-exports. Zod is supported via a custom pipe (see [`/rules/05-dto-and-validation.md`](../rules/05-dto-and-validation.md)).
+- **nestjs-pino + pino + pino-http** — structured logging for every request (redaction, 4xx→`warn` / 5xx→`error`), owned by [`src/core/logger`](../src/core/logger); everything else logs through `AppLogger`. `pino-pretty` for dev.
+- **@fastify/helmet + @fastify/cors + @fastify/cookie** — security headers, CORS, cookie parsing; the HTTP platform vendor is owned by [`src/bootstrap`](../src/bootstrap).
 - **reflect-metadata, rxjs, tslib** — framework runtime.
+
+> **Vendor ownership is ESLint-enforced** ([`eslint/package-boundaries.config.mjs`](../eslint/package-boundaries.config.mjs)): each package above is importable only inside its owning module, so swapping any vendor touches exactly one folder. Dependencies are kept at **latest with `^` ranges** — `npm run deps:check` reports drift, `npm run deps:upgrade` bumps + reinstalls (then run every gate).
 
 > **Not shipped on purpose (you choose):** ORM/database driver, cache/queue client, mailer, object storage, APM. Add them behind an **adapter** (rules/12) so the rest of the codebase never imports the vendor directly. The reference module under [`../src/modules/articles`](../src/modules/articles) uses an in-memory repository so the starter runs with zero external services.
 
@@ -60,6 +62,12 @@
 | `test` / `test:watch` | `vitest run` / `vitest` | Tests |
 | `test:coverage` | `vitest run --coverage` | Tests + coverage gate |
 
+## Security scanning (Trivy)
+
+- **Trivy** (Aqua Security) scans the lockfile for CVEs plus secrets and misconfigurations. Install once (`winget install AquaSecurity.Trivy` / `brew install trivy` / [release binaries](https://github.com/aquasecurity/trivy/releases)), then:
+  - `npm run security:scan` — the gate: HIGH/CRITICAL findings (incl. dev deps) exit non-zero. Run before release and in CI.
+  - `npm run security:scan:full` — full report at every severity.
+
 ## Quality gates (all green before "done")
 
 ```bash
@@ -68,6 +76,7 @@ npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
 npm run test:coverage   # coverage thresholds met
 npm run build           # compiles clean
+npm run security:scan   # trivy: no HIGH/CRITICAL vulns, secrets, or misconfig
 ```
 
 A green build is **not** proof of correctness — walk the [review checklist](../rules/15-review-checklist.md) and prove behavior with tests.

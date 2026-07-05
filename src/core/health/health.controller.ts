@@ -1,5 +1,5 @@
+import { ApiTags } from '@core/openapi';
 import { Controller, Get } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 
 import { HealthService } from './health.service';
 import type { HealthStatus } from './health.types';

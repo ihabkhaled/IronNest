@@ -1,6 +1,4 @@
-import { APP_CONFIG_NAMESPACE } from '@config/app.config';
-import type { AppConfig } from '@config/config.types';
-import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '@config/app-config.service';
 
 import { LISTEN_HOST } from './bootstrap.constants';
 import { configureLifecycle } from './configure-lifecycle';
@@ -19,13 +17,11 @@ export async function bootstrap(): Promise<void> {
   await configureValidation(app);
   configureLifecycle(app);
 
-  const appConfig = app
-    .get(ConfigService)
-    .getOrThrow<AppConfig>(APP_CONFIG_NAMESPACE);
+  const { port, swaggerEnabled } = app.get(AppConfigService).app;
 
-  if (appConfig.swaggerEnabled) {
+  if (swaggerEnabled) {
     configureSwagger(app);
   }
 
-  await app.listen(appConfig.port, LISTEN_HOST);
+  await app.listen(port, LISTEN_HOST);
 }

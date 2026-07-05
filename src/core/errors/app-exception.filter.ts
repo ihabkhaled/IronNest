@@ -1,8 +1,8 @@
+import type { HttpReplyLike } from '@core/http/http-reply.types';
+import { AppLogger } from '@core/logger';
 import type { ArgumentsHost, ExceptionFilter } from '@nestjs/common';
 import { Catch } from '@nestjs/common';
 import { SERVER_ERROR_MIN_STATUS } from '@shared/constants';
-import type { FastifyReply } from 'fastify';
-import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 
 import type { ErrorBody } from './error.types';
 import { toErrorBody } from './error-body.mapper';
@@ -14,13 +14,12 @@ import { toErrorBody } from './error-body.mapper';
  */
 @Catch()
 export class AppExceptionFilter implements ExceptionFilter {
-  constructor(
-    @InjectPinoLogger(AppExceptionFilter.name)
-    private readonly logger: PinoLogger,
-  ) {}
+  constructor(private readonly logger: AppLogger) {
+    this.logger.setContext(AppExceptionFilter.name);
+  }
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const reply = host.switchToHttp().getResponse<FastifyReply>();
+    const reply = host.switchToHttp().getResponse<HttpReplyLike>();
     const body = toErrorBody(exception);
     this.record(body, exception);
     reply.status(body.statusCode).send(body);
@@ -28,20 +27,17 @@ export class AppExceptionFilter implements ExceptionFilter {
 
   private record(body: ErrorBody, exception: unknown): void {
     if (body.statusCode >= SERVER_ERROR_MIN_STATUS) {
-      this.logger.error(
-        {
-          statusCode: body.statusCode,
-          messageKey: body.messageKey,
-          err: exception,
-        },
-        body.message,
-      );
+      this.logger.error(body.message, {
+        statusCode: body.statusCode,
+        messageKey: body.messageKey,
+        err: exception,
+      });
       return;
     }
 
-    this.logger.warn(
-      { statusCode: body.statusCode, messageKey: body.messageKey },
-      body.message,
-    );
+    this.logger.warn(body.message, {
+      statusCode: body.statusCode,
+      messageKey: body.messageKey,
+    });
   }
 }

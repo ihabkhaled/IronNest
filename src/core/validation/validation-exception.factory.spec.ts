@@ -1,12 +1,12 @@
 import { ValidationError } from '@core/errors/validation.error';
+import type { AppLoggerPort } from '@core/logger';
 import type { ValidationError as ClassValidatorError } from 'class-validator';
-import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createValidationExceptionFactory } from './validation-exception.factory';
 
 describe('createValidationExceptionFactory', () => {
-  const logger = { warn: vi.fn() } as unknown as PinoLogger;
+  const logger = { warn: vi.fn() } as unknown as AppLoggerPort;
   const factory = createValidationExceptionFactory(logger);
 
   it('flattens constraints (including nested children), logs, and throws ValidationError', () => {
@@ -25,14 +25,11 @@ describe('createValidationExceptionFactory', () => {
 
     expect(result).toBeInstanceOf(ValidationError);
     expect(result.messageKey).toBe('errors.validation.failed');
-    expect(logger.warn).toHaveBeenCalledWith(
-      {
-        issues: [
-          { field: 'title', constraint: 'title must be a string' },
-          { field: 'meta.slug', constraint: 'invalid' },
-        ],
-      },
-      'Request DTO validation failed',
-    );
+    expect(logger.warn).toHaveBeenCalledWith('Request DTO validation failed', {
+      issues: [
+        { field: 'title', constraint: 'title must be a string' },
+        { field: 'meta.slug', constraint: 'invalid' },
+      ],
+    });
   });
 });

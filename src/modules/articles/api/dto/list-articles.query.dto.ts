@@ -1,6 +1,5 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { ApiPropertyOptional } from '@core/openapi';
+import { IsInt, IsOptional, Max, Min, Type } from '@core/validation';
 
 import {
   ARTICLE_LIST_DEFAULT_LIMIT,

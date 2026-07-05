@@ -1,5 +1,5 @@
+import type { AppLogger } from '@core/logger';
 import type { ArgumentsHost } from '@nestjs/common';
-import type { PinoLogger } from 'nestjs-pino';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AppExceptionFilter } from './app-exception.filter';
@@ -11,11 +11,20 @@ function createHost(reply: unknown): ArgumentsHost {
   } as unknown as ArgumentsHost;
 }
 
-describe('AppExceptionFilter', () => {
-  const logger = { error: vi.fn(), warn: vi.fn() } as unknown as PinoLogger;
-  const filter = new AppExceptionFilter(logger);
+function createLogger(): AppLogger {
+  return {
+    setContext: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  } as unknown as AppLogger;
+}
 
+describe('AppExceptionFilter', () => {
   it('logs a 4xx as warn and sends the sanitized body', () => {
+    const logger = createLogger();
+    const filter = new AppExceptionFilter(logger);
     const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
 
     filter.catch(
@@ -30,16 +39,25 @@ describe('AppExceptionFilter', () => {
         messageKey: 'errors.article.notFound',
       }),
     );
-    expect(logger.warn).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith('missing', {
+      statusCode: 404,
+      messageKey: 'errors.article.notFound',
+    });
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it('logs a 5xx as error', () => {
+  it('logs a 5xx as error with the original exception attached', () => {
+    const logger = createLogger();
+    const filter = new AppExceptionFilter(logger);
     const reply = { status: vi.fn().mockReturnThis(), send: vi.fn() };
+    const boom = new Error('boom');
 
-    filter.catch(new Error('boom'), createHost(reply));
+    filter.catch(boom, createHost(reply));
 
     expect(reply.status).toHaveBeenCalledWith(500);
-    expect(logger.error).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      'Internal server error',
+      expect.objectContaining({ statusCode: 500, err: boom }),
+    );
   });
 });

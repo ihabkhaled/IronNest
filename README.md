@@ -90,9 +90,25 @@ Copy the root configs + [`/eslint`](./eslint) into your repo, merge the `package
 | **Error logging (400→500)** | [`src/core/errors/app-exception.filter.ts`](./src/core/errors/app-exception.filter.ts) | global filter logs & sanitizes every `AppError`/exception |
 | **DTO validation logging** | [`src/core/validation/`](./src/core/validation) | ValidationPipe factory logs each rejected field/constraint |
 | **Split bootstrap** | [`src/bootstrap/`](./src/bootstrap) | one file per concern; orchestrated by `bootstrap.ts` |
-| **Typed, validated config** | [`src/config/`](./src/config) | `@nestjs/config` namespaces + fail-fast env validation |
-| **Rate limiting** | [`src/core/core.module.ts`](./src/core/core.module.ts) | global `@nestjs/throttler` guard from config |
+| **Typed, validated config** | [`src/config/`](./src/config) | `@nestjs/config` namespaces + fail-fast env validation, consumed via `AppConfigService` |
+| **Rate limiting** | [`src/core/rate-limit/`](./src/core/rate-limit) | global `@nestjs/throttler` guard from config |
 | **Clean example feature** | [`src/modules/articles/`](./src/modules/articles) | controller → service → repository → dto → model → lib |
+| **Vulnerability scanning** | `npm run security:scan` | [Trivy](https://trivy.dev) over the lockfile + secrets + misconfig (HIGH/CRITICAL fail the gate) |
+
+## Every library has ONE owning module (swap surfaces)
+
+Every third-party package is importable **only inside the module that owns it** — enforced by [`eslint/package-boundaries.config.mjs`](./eslint/package-boundaries.config.mjs). Want to replace pino, class-validator, the rate limiter, or even the HTTP platform? You touch exactly one folder:
+
+| Vendor | Owning module | The rest of the app uses |
+| --- | --- | --- |
+| `nestjs-pino` / `pino` / `pino-http` / `pino-pretty` | [`src/core/logger/`](./src/core/logger) | `AppLogger` (implements the app-owned `AppLoggerPort`) |
+| `class-validator` / `class-transformer` | [`src/core/validation/`](./src/core/validation) | the `@core/validation` re-exports in DTOs |
+| `@nestjs/swagger` decorators | [`src/core/openapi/`](./src/core/openapi) | the `@core/openapi` re-exports (`ApiProperty`, `ApiTags`, …) |
+| `@nestjs/throttler` | [`src/core/rate-limit/`](./src/core/rate-limit) | imports `RateLimitModule` |
+| `@nestjs/config` | [`src/config/`](./src/config) | injects the typed `AppConfigService` |
+| `fastify` + `@fastify/*` + `@nestjs/platform-*` | [`src/bootstrap/`](./src/bootstrap) | the structural types in [`@core/http`](./src/core/http) |
+
+Dependencies are kept at **latest with `^` ranges** (`npm run deps:check` / `deps:upgrade`), and `npm run security:scan` (Trivy) gates HIGH/CRITICAL vulnerabilities, secrets, and misconfigurations.
 
 ## How the two systems fit together
 

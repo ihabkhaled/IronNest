@@ -1,7 +1,7 @@
-import { createValidationExceptionFactory } from '@core/validation/validation-exception.factory';
+import { AppLogger } from '@core/logger';
+import { createValidationExceptionFactory } from '@core/validation';
 import type { INestApplication } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
 
 // Installs the global ValidationPipe: whitelist strips unknown properties,
 // forbidNonWhitelisted rejects extras, transform builds typed DTO instances, and
@@ -9,8 +9,8 @@ import { PinoLogger } from 'nestjs-pino';
 export async function configureValidation(
   app: INestApplication,
 ): Promise<void> {
-  // PinoLogger is transient-scoped, so it must be resolved (not `get`).
-  const logger = await app.resolve(PinoLogger);
+  // AppLogger is transient-scoped, so it must be resolved (not `get`).
+  const logger = await app.resolve(AppLogger);
   logger.setContext('ValidationPipe');
 
   app.useGlobalPipes(

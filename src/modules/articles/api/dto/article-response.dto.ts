@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@core/openapi';
 
 import { ArticleStatus } from '../../model/article.enums';
 

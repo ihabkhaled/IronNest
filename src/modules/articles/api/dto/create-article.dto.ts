@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty } from '@core/openapi';
+import { IsString, MaxLength, MinLength } from '@core/validation';
 
 import {
   ARTICLE_BODY_MAX_LENGTH,

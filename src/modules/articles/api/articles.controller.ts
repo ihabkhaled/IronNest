@@ -1,5 +1,5 @@
+import { ApiTags } from '@core/openapi';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 
 import { ArticlesService } from '../application/articles.service';
 import type { ArticleResponseDto } from './dto/article-response.dto';

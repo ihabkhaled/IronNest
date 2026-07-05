@@ -1,13 +1,14 @@
-import { NodeEnv } from '@shared/enums';
-import { plainToInstance, Type } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
   IsOptional,
   Max,
   Min,
+  plainToInstance,
+  Type,
   validateSync,
-} from 'class-validator';
+} from '@core/validation';
+import { NodeEnv } from '@shared/enums';
 
 import { MAX_PORT, MIN_PORT } from './config.constants';
 
