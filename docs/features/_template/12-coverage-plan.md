@@ -13,8 +13,8 @@ Define the measurable coverage gate for touched modules and guard against covera
 ## Touched Module Coverage Targets
 
 | Module / area | Lines | Branches | Functions | Statements | Notes |
-| --- | --- | --- | --- | --- | --- |
-| | 95% | 95% | 95% | 95% | |
+| ------------- | ----- | -------- | --------- | ---------- | ----- |
+|               | 95%   | 95%      | 95%       | 95%        |       |
 
 ## Critical Scenario Areas
 
@@ -36,13 +36,13 @@ Define the measurable coverage gate for touched modules and guard against covera
 
 ## Waiver Section
 
-| Field | Value |
-| --- | --- |
-| Waiver needed | yes / no |
-| Reason | |
-| Compensating controls | |
-| Approver | |
-| Expiration date | |
+| Field                 | Value    |
+| --------------------- | -------- |
+| Waiver needed         | yes / no |
+| Reason                |          |
+| Compensating controls |          |
+| Approver              |          |
+| Expiration date       |          |
 
 ## Exit Checklist
 

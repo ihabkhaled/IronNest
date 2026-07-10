@@ -22,7 +22,6 @@ lerna-debug.log*
 
 # Tests / coverage
 /coverage
-*coverage*
 /.nyc_output
 
 # OS
