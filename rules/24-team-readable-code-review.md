@@ -19,14 +19,14 @@ Every reviewed change must answer **yes** to each applicable question:
 - [ ] 7. Are DTOs doing boundary validation?
 - [ ] 8. Are `AppError`s and `messageKey`s clear and complete?
 - [ ] 9. Are auth/permission/ownership checks preserved?
-- [ ] 10. Are external libraries still behind adapters?
+- [ ] 10. Are external libraries still behind app-owned ports/adapters, with vendor types contained?
 - [ ] 11. Did we reuse existing owners ([22](./22-reuse-before-creating.md))?
-- [ ] 12. Did we avoid duplicate constants/helpers?
+- [ ] 12. Did we avoid inline/anonymous declarations and duplicate constants/helpers ([30](./30-declaration-ownership.md))?
 - [ ] 13. Are functions short ([23](./23-function-service-file-size-discipline.md))?
 - [ ] 14. Are tests readable (scenario-stating names, no mystery setup)?
-- [ ] 15. Did we avoid clever TypeScript ([20 §4](./20-simple-readable-code.md))?
+- [ ] 15. Did we avoid clever TypeScript and pass the 30-second type rule ([25](./25-no-clever-typescript.md))?
 - [ ] 16. Did we avoid speculative abstractions ([21](./21-yagni-and-minimalism.md))?
-- [ ] 17. Is the **next** change easy?
+- [ ] 17. Is the **next** change easy, with one owner and no token-burning indirection?
 - [ ] 18. Are docs updated?
 - [ ] 19. Are gates green?
 
@@ -49,4 +49,4 @@ The review output names, with file anchors: unnecessary code to remove · duplic
 - [ ] Findings are file-anchored and use the 15-review blocker language
 - [ ] Gates green: `npm run lint` · `npm run typecheck` · `npm run test` · `npm run test:coverage` · `npm run build`
 
-**Related:** [15-review-checklist.md](./15-review-checklist.md) · [20-simple-readable-code.md](./20-simple-readable-code.md) · [21-yagni-and-minimalism.md](./21-yagni-and-minimalism.md) · [22-reuse-before-creating.md](./22-reuse-before-creating.md) · [23-function-service-file-size-discipline.md](./23-function-service-file-size-discipline.md) · [/skills/review-for-readable-code.md](../skills/review-for-readable-code.md) · [/agents/backend-code-reviewer.md](../agents/backend-code-reviewer.md)
+**Related:** [15-review-checklist.md](./15-review-checklist.md) · [20-simple-readable-code.md](./20-simple-readable-code.md) · [25-no-clever-typescript.md](./25-no-clever-typescript.md) · [26-helper-driven-maintainability.md](./26-helper-driven-maintainability.md) · [27-no-token-burning-code.md](./27-no-token-burning-code.md) · [28-codebase-refactor-discipline.md](./28-codebase-refactor-discipline.md) · [30-declaration-ownership.md](./30-declaration-ownership.md) · [/skills/review-for-readable-code.md](../skills/review-for-readable-code.md) · [/agents/backend-code-reviewer.md](../agents/backend-code-reviewer.md)

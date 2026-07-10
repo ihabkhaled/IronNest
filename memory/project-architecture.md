@@ -1,6 +1,6 @@
 # Project Architecture — Standing Decision
 
-> The layered, module-per-feature NestJS architecture is the **standing architectural decision** for every backend in this workspace. This note records the decision and why it holds; the authoritative diagram and tree live in [`/context/architecture-map.md`](../context/architecture-map.md), and the hard rules in [`/rules/00-non-negotiable-rules.md`](../rules/00-non-negotiable-rules.md). When in doubt, those two files win.
+> The layered, module-per-feature NestJS architecture is the standing decision. `claude.md` wins globally; within subordinate engineering guidance, the authoritative diagram is [`context/architecture-map.md`](../context/architecture-map.md) and the hard rules are [`rules/00`](../rules/00-non-negotiable-rules.md).
 
 This is a **memory** note: a convention you inherit, not a proposal to re-litigate. It is stack-and-domain agnostic. The constants are the layers, boundaries, and naming; the variables are your business domain and your chosen libraries.
 
@@ -19,7 +19,7 @@ This is a **memory** note: a convention you inherit, not a proposal to re-litiga
 | Default building block | A **service**; escalate to a **use case** only for multi-entity transactional orchestration                             |
 | Enforcement            | Strict TS + ESLint custom `architecture/*` plugin + Husky gates — not convention-by-hope                                |
 
-> **Project records:** `<this project's domain, deployable name, and list of feature modules>`. Record the concrete module list here as the codebase grows so newcomers and agents can map the abstract layers onto real folders.
+**IronNest reference records:** one Nest deployable with feature modules `auth`, `users`, and `articles`; cross-cutting authentication/permission contracts and guards live in `src/core/auth`, while JWT/password vendor implementations remain in `src/modules/auth/adapters`.
 
 ---
 
@@ -72,14 +72,17 @@ src/modules/<feature>/
 ├── domain/                      # policies · entities · state machines (pure)
 ├── infrastructure/
 │   └── <feature>.repository.ts  # persistence only
+├── adapters/
+│   └── <vendor>.adapter.ts      # sole vendor importer behind an app-owned port
 ├── model/
 │   ├── <feature>.types.ts
+│   ├── <feature>.interfaces.ts # only when an established port/interface split earns it
 │   ├── <feature>.enums.ts
 │   └── <feature>.constants.ts
 └── lib/                         # mappers · formatters · helpers
 ```
 
-Create folders by responsibility as needed — not every module needs every folder. Catch-all files (`utils.ts`, `helpers.ts`, `types.ts` at module root) are banned; use descriptive names in the proper directory. See [`06-types-enums-constants.md`](../rules/06-types-enums-constants.md).
+Create folders by responsibility as needed — not every module needs every folder. Catch-all files (`utils.ts`, `helpers.ts`, `types.ts` at module root) are banned; use descriptive names in the proper directory. Anonymous request/result/config/permission contracts do not stay in implementation signatures, and DTOs use declarations rather than `!`. See [`30-declaration-ownership.md`](../rules/30-declaration-ownership.md).
 
 > **Project records:** `<any feature that legitimately deviates from this template, and the documented reason>`. Deviations are allowed but must be written down, never silent.
 
@@ -115,16 +118,16 @@ See [`03-application-services-and-use-cases.md`](../rules/03-application-service
 
 ## Cross-cutting layout (`src/core`, `src/shared`, `config`, `bootstrap`)
 
-| Location                          | Owns                                                                                                     | Records to keep                                                                       |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `config/`                         | Typed config via `@nestjs/config` + startup validation. **One of two places** `process.env` may be read. | [`17-configuration-and-environment.md`](../rules/17-configuration-and-environment.md) |
-| `bootstrap/`                      | App assembly: pipes, filters, OpenAPI, listen. The other place `process.env` is allowed.                 | —                                                                                     |
-| `core/logger/`                    | Logger adapter. Never `console.*`.                                                                       | [`14-observability-and-logging.md`](../rules/14-observability-and-logging.md)         |
-| `core/errors/`                    | Typed `AppError` hierarchy + global exception filter; `messageKey` of form `errors.<feature>.<key>`.     | [`18-error-handling-and-exceptions.md`](../rules/18-error-handling-and-exceptions.md) |
-| `core/guards/`                    | Auth guard + permissions (RBAC) guard + ownership/tenant check.                                          | [`07-security-authn-authz.md`](../rules/07-security-authn-authz.md)                   |
-| `core/events/`                    | Event bus / emitter wrapper for post-commit, fail-safe handlers.                                         | [`19-async-events-and-jobs.md`](../rules/19-async-events-and-jobs.md)                 |
-| `shared/enums/`                   | All domain enums, barrel-exported, each with a `*_VALUES` array.                                         | [`06-types-enums-constants.md`](../rules/06-types-enums-constants.md)                 |
-| `shared/{constants,types,utils}/` | Dependency-light building blocks. `shared/` imports only `shared/`.                                      | —                                                                                     |
+| Location                          | Owns                                                                                                                    | Records to keep                                                                       |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `config/`                         | Typed config via `@nestjs/config` + startup validation. **One of two places** `process.env` may be read.                | [`17-configuration-and-environment.md`](../rules/17-configuration-and-environment.md) |
+| `bootstrap/`                      | App assembly: pipes, filters, OpenAPI, listen. The other place `process.env` is allowed.                                | —                                                                                     |
+| `core/logger/`                    | Logger adapter. Never `console.*`.                                                                                      | [`14-observability-and-logging.md`](../rules/14-observability-and-logging.md)         |
+| `core/errors/`                    | Typed `AppError` hierarchy + global exception filter; `messageKey` of form `errors.<feature>.<key>`.                    | [`18-error-handling-and-exceptions.md`](../rules/18-error-handling-and-exceptions.md) |
+| `core/auth/`                      | Identity/token contracts, auth + permission guards/decorators; ownership remains application/domain/repository defense. | [`07-security-authn-authz.md`](../rules/07-security-authn-authz.md)                   |
+| `core/events/`                    | Event bus / emitter wrapper for post-commit, fail-safe handlers.                                                        | [`19-async-events-and-jobs.md`](../rules/19-async-events-and-jobs.md)                 |
+| `shared/enums/`                   | All domain enums, barrel-exported, each with a `*_VALUES` array.                                                        | [`06-types-enums-constants.md`](../rules/06-types-enums-constants.md)                 |
+| `shared/{constants,types,utils}/` | Dependency-light building blocks. `shared/` imports only `shared/`.                                                     | —                                                                                     |
 
 Path aliases (kept in sync across `tsconfig` and the Vitest config): `@/*`, `@app/*`, `@config/*`, `@core/*`, `@modules/*`, `@shared/*`.
 

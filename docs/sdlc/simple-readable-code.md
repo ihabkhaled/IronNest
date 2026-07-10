@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the permanent company baseline for code simplicity and readability. It defines what "simple" means here, how it is enforced, and where its boundaries are. The stack-specific canon lives in `rules/20-simple-readable-code.md` through `rules/24-team-readable-code-review.md`; this baseline states the standing policy every request-specific feature folder inherits.
+This document is the permanent company baseline for code simplicity and readability. It defines what "simple" means here, how it is enforced, and where its boundaries are. The stack-specific canon lives in `rules/20-simple-readable-code.md` through `rules/30-declaration-ownership.md`; this baseline states the standing policy every request-specific feature folder inherits.
 
 ## The Principle
 
@@ -60,10 +60,10 @@ Deleting or skipping any of the following is not simplicity — it is a policy v
 
 ## How It Is Enforced
 
-- Mechanically: `complexity` ≤ 15, `sonarjs/cognitive-complexity` ≤ 15, `max-depth` ≤ 3, `no-nested-ternary`, service methods ≤ 20 lines, one class per layer file, plus the architecture plugin (see `rules/13-eslint-and-typescript.md`).
-- By procedure: the simplicity skills in `skills/` (write-simple-readable-code, reuse-before-creating, simplify-existing-code, extract-helper-safely, the split-large-* family, review-for-readable-code, remove-unnecessary-code, refactor-smart-code-to-boring-code).
+- Mechanically: `complexity` ≤ 15, `sonarjs/cognitive-complexity` ≤ 15, `max-depth` ≤ 3, `no-nested-ternary`, service methods ≤ 20 lines, conservative budgets on other implementation methods, no inline/anonymous layer contracts, no DTO definite-assignment assertions, one class per layer file, plus package boundaries (see `rules/13-eslint-and-typescript.md`).
+- By procedure: the indexed simplicity and cleanup skills in `skills/`, especially `full-codebase-cleanup.md`, `refactor-inline-declarations.md`, and the focused security/validation cleanup playbooks.
 - By review: section 2a of `rules/15-review-checklist.md` and the readability questions of `rules/24-team-readable-code-review.md`.
-- By record: durable rationale in `memory/code-simplicity-decisions.md`; recurring traps in `memory/known-pitfalls.md` section J.
+- By record: durable rationale in `memory/code-simplicity-decisions.md`, refactor/agent/security/validation decision files, and recurring traps in `memory/known-pitfalls.md`.
 
 ## AI Agent Behavior
 

@@ -127,7 +127,7 @@ public async run(): Promise<BackfillResult> {
     cursor = batch[batch.length - 1]?.id ?? cursor;
     this.log.info('backfill_progress', { processed, cursor });
   }
-  return { status: BackfillStatus.COMPLETED, processed };
+  return { status: BackfillStatus.Completed, processed };
 }
 ```
 

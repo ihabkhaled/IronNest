@@ -1,6 +1,6 @@
 # Code Simplicity Decisions
 
-> Durable record of **why** IronNest enforces simple, boring, reuse-first code — the rationale behind [rules 20–24](../rules/README.md) and non-negotiable rules 43–46. Hard rules live in [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md); this file records the standing decisions so future agents and engineers do not relitigate them.
+> Durable record of **why** IronNest enforces simple, boring, reuse-first code — the rationale behind [rules 20–30](../rules/README.md) and non-negotiable rules 43–50. Hard rules live in [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md); this file records the standing decisions so future agents and engineers do not relitigate them.
 
 Every line marked **Project records:** is a placeholder a concrete project fills in once. Until then, treat the stated default as the house standard.
 
@@ -10,7 +10,7 @@ Every line marked **Project records:** is a placeholder a concrete project fills
 
 **What:** every change must be junior-readable and senior-trustworthy; the Simple Code Ladder (need → reuse → native → adapter → helper → direct → justified abstraction) runs before any new code.
 **Why:** with mixed experience levels and heavy AI-agent authorship, review time and onboarding cost — not typing speed — dominate delivery cost. Boring code is the cheapest code to own.
-**Specifics (this workspace):** rules [20](../rules/20-simple-readable-code.md)–[24](../rules/24-team-readable-code-review.md); mechanical backstops `complexity: 15`, `sonarjs/cognitive-complexity: 15`, `max-depth: 3`, `no-nested-ternary`, service methods ≤ 20 lines, `max-classes-per-file: 1` on layer files.
+**Specifics (this workspace):** rules [20](../rules/20-simple-readable-code.md)–[30](../rules/30-declaration-ownership.md); mechanical backstops `complexity: 15`, `sonarjs/cognitive-complexity: 15`, `max-depth: 3`, `no-nested-ternary`, layer method budgets, inline/anonymous contract checks, no DTO definite-assignment assertions, and `max-classes-per-file: 1`.
 **Project records:** any project-specific threshold overrides (must be stricter, never looser) and the ADR that approved them.
 
 ---
@@ -55,9 +55,17 @@ Every line marked **Project records:** is a placeholder a concrete project fills
 
 ---
 
+## Decision: declarations have named owners
+
+**What:** constants go to `*.constants.ts`, data contracts to descriptive `*.types.ts` (or an established `*.interfaces.ts` split), enums to `*.enums.ts`/shared enum files, DTOs to `api/dto/`, helpers to `lib/`, and policy to `domain/`. Layer signatures never hide anonymous request/result types; DTOs use `declare readonly`, not `!`.
+**Why:** discoverable ownership prevents drift and makes static enforcement possible.
+**Specifics:** [rules/30](../rules/30-declaration-ownership.md) and [context/declaration-ownership-map.md](../context/declaration-ownership-map.md).
+
+---
+
 ## Decision: rules stay canonical, skills stay procedural
 
-**What:** the simplicity canon lives in `rules/20`–`rules/24`; the ten simplicity skills only apply it step by step. When a skill and a rule disagree, the rule wins; agent entrypoints carry a compact ladder pointer, never a restated rule body.
+**What:** the simplicity canon lives in `rules/20`–`rules/30`; skills only apply it step by step. When a skill and a rule disagree, the rule wins; agent entrypoints carry compact pointers, never a restated rule body.
 **Why:** one source of truth per concern — the same ownership rule the code follows.
 
 ---
@@ -70,4 +78,4 @@ Every line marked **Project records:** is a placeholder a concrete project fills
 - [ ] Boring direct version chosen; no clever TypeScript (rule 46)
 - [ ] Nothing safety-relevant cut in the name of minimalism (rule 46)
 
-**Related:** [known-pitfalls.md](./known-pitfalls.md) · [ai-context-map.md](./ai-context-map.md) · [../rules/20-simple-readable-code.md](../rules/20-simple-readable-code.md) · [../rules/21-yagni-and-minimalism.md](../rules/21-yagni-and-minimalism.md) · [../rules/22-reuse-before-creating.md](../rules/22-reuse-before-creating.md) · [../rules/23-function-service-file-size-discipline.md](../rules/23-function-service-file-size-discipline.md) · [../rules/24-team-readable-code-review.md](../rules/24-team-readable-code-review.md) · [../context/simple-code-map.md](../context/simple-code-map.md)
+**Related:** [known-pitfalls.md](./known-pitfalls.md) · [ai-context-map.md](./ai-context-map.md) · [../rules/20-simple-readable-code.md](../rules/20-simple-readable-code.md) · [../rules/25-no-clever-typescript.md](../rules/25-no-clever-typescript.md) · [../rules/26-helper-driven-maintainability.md](../rules/26-helper-driven-maintainability.md) · [../rules/27-no-token-burning-code.md](../rules/27-no-token-burning-code.md) · [../rules/28-codebase-refactor-discipline.md](../rules/28-codebase-refactor-discipline.md) · [../rules/29-agent-readiness-and-mirrors.md](../rules/29-agent-readiness-and-mirrors.md) · [../rules/30-declaration-ownership.md](../rules/30-declaration-ownership.md) · [../context/simple-code-map.md](../context/simple-code-map.md)

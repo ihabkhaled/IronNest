@@ -97,7 +97,7 @@ import { OrderModulePublicApi } from '@modules/order'; // index.ts barrel
 
 **Concrete finding (the shape to report):**
 
-> `src/modules/invoice/api/invoice.controller.ts:42` — `markPaid()` loads the invoice, branches on `invoice.status === 'open'`, and writes via an injected `InvoiceRepository`. Three violations: controller holds logic (`architecture/controller-no-logic`), compares a magic string instead of `InvoiceStatus.OPEN` (rule 9), and imports the repository (`architecture/no-restricted-layer-imports`). **Move:** the branch + write become `InvoicePaymentService.markPaid(id, user)` in `application/`; the status check becomes `InvoicePolicy.assertPayable()` in `domain/`; the controller keeps a single delegation. Because it spans only one entity, a **Service** is correct — no use-case escalation.
+> `src/modules/invoice/api/invoice.controller.ts:42` — `markPaid()` loads the invoice, branches on `invoice.status === 'open'`, and writes via an injected `InvoiceRepository`. Three violations: controller holds logic (`architecture/controller-no-logic`), compares a magic string instead of `InvoiceStatus.Open` (rule 9), and imports the repository (`architecture/no-restricted-layer-imports`). **Move:** the branch + write become `InvoicePaymentService.markPaid(id, user)` in `application/`; the status check becomes `InvoicePolicy.assertPayable()` in `domain/`; the controller keeps a single delegation. Because it spans only one entity, a **Service** is correct — no use-case escalation.
 
 ## Rules / skills this role relies on
 

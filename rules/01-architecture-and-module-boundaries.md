@@ -94,16 +94,16 @@ Do **not** reach for a use case for CRUD, thin delegations, read projections, or
 
 ## NestJS building blocks → where they live
 
-| NestJS concept          | Home                                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------------- |
-| `@Controller`           | `api/<feature>.controller.ts` (thin; `@UseGuards`, custom param decorators only)              |
-| `@Injectable` provider  | `application/<feature>.service.ts` or `<action>.use-case.ts`                                  |
-| Guard (`CanActivate`)   | `core/guards/` (auth, permissions/RBAC, ownership/tenant)                                     |
-| Interceptor / Pipe      | `core/interceptors/` · global `ValidationPipe` in `bootstrap/`, custom pipes in `core/pipes/` |
-| Exception filter        | `core/errors/` (sanitizes errors → safe `{ messageKey }`)                                     |
-| Custom decorator        | `core/decorators/` or module `lib/` (e.g. `@CurrentUser()`, `@RequirePermissions()`)          |
-| Module                  | `<feature>.module.ts`, `app.module.ts`                                                        |
-| Repository / ORM client | `infrastructure/<feature>.repository.ts` (vendor imported only here, or in an adapter)        |
+| NestJS concept          | Home                                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `@Controller`           | `api/<feature>.controller.ts` (thin; `@UseGuards`, custom param decorators only)                |
+| `@Injectable` provider  | `application/<feature>.service.ts` or `<action>.use-case.ts`                                    |
+| Guard (`CanActivate`)   | `core/auth/` (auth + permissions); ownership/tenant stays application/domain/repository defense |
+| Interceptor / Pipe      | `core/interceptors/` · global `ValidationPipe` in `bootstrap/`, custom pipes in `core/pipes/`   |
+| Exception filter        | `core/errors/` (sanitizes errors → safe `{ messageKey }`)                                       |
+| Auth custom decorator   | `core/auth/` (e.g. `@CurrentUser()`, `@RequirePermissions()`, `@Public()`)                      |
+| Module                  | `<feature>.module.ts`, `app.module.ts`                                                          |
+| Repository / ORM client | `infrastructure/<feature>.repository.ts` (vendor imported only here, or in an adapter)          |
 
 ---
 
@@ -209,7 +209,7 @@ export class OrderModule {}
 
 ```
 HTTP request
-  → Guard(s)         auth → permissions(RBAC) → ownership/tenant      (core/guards)
+  → Guard(s)         auth → permissions (core/auth) → ownership/tenant (application/domain)
   → Pipe             ValidationPipe transforms + validates the DTO     (bootstrap)
   → Controller       one delegation → application method               (api/<feature>.controller.ts)
   → Use case/Service orchestrate domain + repository (+ transaction)   (application/*)

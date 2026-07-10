@@ -152,6 +152,7 @@ async listByAccount(accountId: string): Promise<Order[]> {
 - Prefer one round-trip that returns the count (`findAndCount`, `count` alongside `findMany`) over two separate calls.
 - **`order` is required** — paging without a deterministic sort yields unstable pages.
 - Pagination + filter shaping is the repository's job; computing/clamping happens once and is reused. See [09-performance-and-scalability.md](./09-performance-and-scalability.md) for keyset pagination on hot paths.
+- Ownership/tenant scope is applied **before** ordering, pagination, and total calculation. Fetching a broad page and filtering it in the service leaks counts/timing and produces sparse or incorrect pages.
 
 ---
 
@@ -235,6 +236,7 @@ async findById(id: string): Promise<Order | null> {
 
 - Make `tenantId` a non-optional parameter so the compiler refuses an un-scoped call.
 - The repository **enforces** the scope; the application layer **also** verifies ownership. Two independent checks; neither replaces the other.
+- Owner/tenant query input and result envelopes are named contracts from `model/*.types.ts`; never anonymous `Promise<{ items: ... }>` shapes in repository signatures ([30-declaration-ownership.md](./30-declaration-ownership.md)).
 - Where to record the project's tenant key and scoping strategy: [/memory/security-decisions.md](../memory/security-decisions.md).
 
 ---

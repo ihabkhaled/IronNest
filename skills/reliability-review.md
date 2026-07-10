@@ -117,10 +117,10 @@ Retried or duplicate-delivered requests (registration, verification, webhooks, p
 
 ```ts
 // domain/<feature>.state-machine.ts — DO: transition validates current state
-if (order.status !== OrderStatus.DRAFT) {
+if (order.status !== OrderStatus.Draft) {
   return order; // already published → idempotent no-op
 }
-return { ...order, status: OrderStatus.PUBLISHED };
+return { ...order, status: OrderStatus.Published };
 ```
 
 ## Step 5 — Fire-and-forget side effects (the #1 recurring bug)
@@ -130,7 +130,7 @@ A throw inside an event handler propagates back into the publisher and blocks th
 ```ts
 // DO — handler self-contains its failure
 this.events.subscribe(
-  OrderEvent.PUBLISHED,
+  OrderEvent.Published,
   async (event: OrderPublishedEvent) => {
     try {
       await this.broadcastService.notifyOfPublishedOrder(event.order);
@@ -145,7 +145,7 @@ this.events.subscribe(
 
 // DON'T — unhandled throw blocks the publish path
 this.events.subscribe(
-  OrderEvent.PUBLISHED,
+  OrderEvent.Published,
   async (event: OrderPublishedEvent) => {
     await this.broadcastService.notifyOfPublishedOrder(event.order); // throws → blocks workflow
   },

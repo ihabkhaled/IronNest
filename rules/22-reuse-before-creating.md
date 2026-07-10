@@ -8,20 +8,20 @@
 
 Run this search before creating anything new. It is step 2 of the Simple Code Ladder ([20 §2](./20-simple-readable-code.md)).
 
-| Looking for…                                   | Search first                                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Cross-module constants / enums / types / utils | `src/shared/constants`, `src/shared/enums`, `src/shared/types`, `src/shared/utils`              |
-| Cross-cutting infrastructure                   | `src/core/*` (logger, errors, validation, openapi, clock, id-generator, health, rate-limit)     |
-| Module-local types / enums / constants         | the module's `model/` (`*.types.ts`, `*.enums.ts`, `*.constants.ts`)                            |
-| Pure helpers / mappers / formatters            | the module's `lib/`                                                                             |
-| Business decisions / invariants                | the module's `domain/`                                                                          |
-| Request/response shapes                        | the module's `api/dto/`                                                                         |
-| Error classes and message keys                 | `src/core/errors/*` and the module's `model/*.constants.ts` (`errors.<feature>.<key>`)          |
-| Vendor access                                  | existing `adapters/` and the vendor swap surfaces ([12](./12-library-wrapping-and-adapters.md)) |
-| Existing repositories / services / use cases   | sibling feature modules ([/context/codebase-navigation.md](../context/codebase-navigation.md))  |
-| Test fixtures and builders                     | colocated `*.spec.ts` setups and `test/`                                                        |
-| The canonical shape to copy                    | [/context/reference-patterns.md](../context/reference-patterns.md)                              |
-| Known traps in this area                       | [/memory/known-pitfalls.md](../memory/known-pitfalls.md)                                        |
+| Looking for…                                   | Search first                                                                                      |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Cross-module constants / enums / types / utils | `src/shared/constants`, `src/shared/enums`, `src/shared/types`, `src/shared/utils`                |
+| Cross-cutting infrastructure                   | `src/core/*` (auth, logger, errors, validation, openapi, clock, id-generator, health, rate-limit) |
+| Module-local types / enums / constants         | the module's `model/` (`*.types.ts`, `*.enums.ts`, `*.constants.ts`)                              |
+| Pure helpers / mappers / formatters            | the module's `lib/`                                                                               |
+| Business decisions / invariants                | the module's `domain/`                                                                            |
+| Request/response shapes                        | the module's `api/dto/`                                                                           |
+| Error classes and message keys                 | `src/core/errors/*` and the module's `model/*.constants.ts` (`errors.<feature>.<key>`)            |
+| Vendor access                                  | existing `adapters/` and the vendor swap surfaces ([12](./12-library-wrapping-and-adapters.md))   |
+| Existing repositories / services / use cases   | sibling feature modules ([/context/codebase-navigation.md](../context/codebase-navigation.md))    |
+| Test fixtures and builders                     | colocated `*.spec.ts` setups and `test/`                                                          |
+| The canonical shape to copy                    | [/context/reference-patterns.md](../context/reference-patterns.md)                                |
+| Known traps in this area                       | [/memory/known-pitfalls.md](../memory/known-pitfalls.md)                                          |
 
 ## 2. Never duplicate
 

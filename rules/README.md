@@ -40,14 +40,21 @@ These engineering rules sit **inside** the governance lifecycle defined by the r
 | 22  | [`22-reuse-before-creating.md`](./22-reuse-before-creating.md)                                 | Search-the-owner-first, never ship a parallel duplicate                              |
 | 23  | [`23-function-service-file-size-discipline.md`](./23-function-service-file-size-discipline.md) | Per-layer size budgets, extraction routing, helper-driven maintainability            |
 | 24  | [`24-team-readable-code-review.md`](./24-team-readable-code-review.md)                         | The nineteen readability review questions                                            |
+| 25  | [`25-no-clever-typescript.md`](./25-no-clever-typescript.md)                                   | Plain contracts, the 30-second type rule, no type gymnastics                         |
+| 26  | [`26-helper-driven-maintainability.md`](./26-helper-driven-maintainability.md)                 | When helpers earn an owner and when direct code is clearer                           |
+| 27  | [`27-no-token-burning-code.md`](./27-no-token-burning-code.md)                                 | Protect human/AI context, review, CI, and runtime budgets                            |
+| 28  | [`28-codebase-refactor-discipline.md`](./28-codebase-refactor-discipline.md)                   | Tests-first, responsibility-sliced whole-codebase cleanup                            |
+| 29  | [`29-agent-readiness-and-mirrors.md`](./29-agent-readiness-and-mirrors.md)                     | Canonical precedence, compact entrypoints, mirror synchronization                    |
+| 30  | [`30-declaration-ownership.md`](./30-declaration-ownership.md)                                 | Canonical homes for constants, types, interfaces, enums, DTOs, helpers, and maps     |
 
 ## Standard workflow (every task)
 
 1. Read [`00-non-negotiable-rules.md`](./00-non-negotiable-rules.md) → the layer rule(s) → [`/memory/known-pitfalls.md`](../memory/known-pitfalls.md).
 2. Inspect the real code before editing — mirror an existing clean module; never invent contracts.
 3. Run the Simple Code Ladder ([`20-simple-readable-code.md`](./20-simple-readable-code.md)): reuse an existing owner before creating anything new; prefer the boring direct version.
-4. **Write/update tests first.**
-5. Make the minimal safe change in the correct layer.
-6. Run lint → typecheck → test → coverage → build until green.
-7. Update docs and the relevant SDLC artifacts ([`/docs`](../docs)).
-8. On a new recurring mistake, add it to [`/memory/known-pitfalls.md`](../memory/known-pitfalls.md) and mirror the compact entry across the entry files (`claude.md`, `AGENTS.md`, `codex.md`, `.cursorrules`, `.cursor/rules`).
+4. Route every declaration through [`30-declaration-ownership.md`](./30-declaration-ownership.md) and every broad cleanup through [`28-codebase-refactor-discipline.md`](./28-codebase-refactor-discipline.md).
+5. **Write/update tests first.**
+6. Make the minimal safe change in the correct layer.
+7. Run lint → typecheck → test → coverage → build until green.
+8. Update docs and the relevant SDLC artifacts ([`/docs`](../docs)).
+9. On a permanent change, update `claude.md` first; synchronize full `codex.md`/`cursor.md`, then compact pointers in `AGENTS.md`, all six family routers, `.cursorrules`, and `.cursor/rules`; record recurring mistakes in [`memory/known-pitfalls.md`](../memory/known-pitfalls.md).

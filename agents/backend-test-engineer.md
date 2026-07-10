@@ -22,14 +22,14 @@ You do not negotiate the gate. You close gaps, not lower bars.
 1. [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) — the hard rules; rules 8–9 (enums not raw literals), 26 (typed `AppError` + `messageKey`), 42 (tests + docs ship together).
 2. [/rules/11-testing-and-coverage.md](../rules/11-testing-and-coverage.md) — the layer matrix, what to cover, the gate.
 3. [/context/architecture-map.md](../context/architecture-map.md) — the layers, so you mock at the correct boundary and test the unit you claim to test.
-4. [/context/stack-and-toolchain.md](../context/stack-and-toolchain.md) — Vitest 4, `@nestjs/testing`, supertest, `@vitest/coverage-istanbul`, exact commands.
+4. [/context/stack-and-toolchain.md](../context/stack-and-toolchain.md) — Vitest 4, `@nestjs/testing`, supertest, V8 coverage, exact commands.
 5. The testing standards: [/testing/unit-testing-standard.md](../testing/unit-testing-standard.md), [/testing/integration-testing-standard.md](../testing/integration-testing-standard.md), [/testing/e2e-testing-standard.md](../testing/e2e-testing-standard.md), [/testing/coverage-policy.md](../testing/coverage-policy.md), [/testing/test-data-and-fixtures.md](../testing/test-data-and-fixtures.md).
 6. The code under test and its **existing** nearby spec, to match conventions before adding new cases.
 7. The matching skill for the layer you are writing: [/skills/write-unit-tests.md](../skills/write-unit-tests.md), [/skills/write-integration-tests.md](../skills/write-integration-tests.md), [/skills/write-e2e-tests.md](../skills/write-e2e-tests.md).
 
 ## Toolchain facts (do not violate)
 
-- Runner is **Vitest 4** with `@vitest/coverage-istanbul`. Use `vi.fn()`, `vi.mock()`, `vi.spyOn()`. **Never** write Jest APIs (`jest.fn`, `jest.mock`, `ts-jest`, `npx jest`) — there is no Jest in this workspace.
+- Runner is **Vitest 4** with the configured V8 coverage provider. Use `vi.fn()`, `vi.mock()`, `vi.spyOn()`. **Never** write Jest APIs (`jest.fn`, `jest.mock`, `ts-jest`, `npx jest`) — there is no Jest in this workspace.
 - Build the SUT with `Test.createTestingModule` and provider overrides so DI matches production. Avoid `new Service(...)` with hand-rolled blobs.
 - **Unit tests** mock every collaborator across a layer boundary (repository, adapter, other modules' public surface) — no real DB, cache, broker, HTTP, or external API.
 - **Integration / e2e tests** boot the Nest app via `@nestjs/testing` and drive HTTP with **supertest**, exercising guards → pipes → controller → application → repository against a real (migrated/seeded) test database.
@@ -130,7 +130,7 @@ it('GET /orders/:id returns 403 for a non-owner', async () => {
 
 ```bash
 npm run test            # Vitest — full suite
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%) — the hard bar
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run build           # compiles clean

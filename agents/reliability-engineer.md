@@ -60,7 +60,7 @@ async publish(order: Order): Promise<Order> {
   return order;
 }
 
-this.events.subscribe(OrderEvent.PUBLISHED, async (event: OrderPublishedEvent) => {
+this.events.subscribe(OrderEvent.Published, async (event: OrderPublishedEvent) => {
   await this.notifier.notifySubscribers(event.order); // ✗ a throw aborts the publish path
 });
 ```
@@ -77,7 +77,7 @@ async execute(input: PublishOrderInput): Promise<OrderResult> {
   return toOrderResult(order);
 }
 
-this.events.subscribe(OrderEvent.PUBLISHED, async (event: OrderPublishedEvent) => {
+this.events.subscribe(OrderEvent.Published, async (event: OrderPublishedEvent) => {
   try {
     await this.notifier.notifySubscribers(event.order);
   } catch (error: unknown) {

@@ -103,7 +103,7 @@ if (order.status === 'draft') {
 }
 
 // DO — import the enum, compare to its member (rules 8–9)
-if (order.status === OrderStatus.DRAFT) {
+if (order.status === OrderStatus.Draft) {
   /* ... */
 }
 ```
@@ -113,9 +113,9 @@ if (order.status === OrderStatus.DRAFT) {
 ```ts
 function label(status: OrderStatus): string {
   switch (status) {
-    case OrderStatus.DRAFT:
+    case OrderStatus.Draft:
       return MESSAGE_KEYS.orderDraft;
-    case OrderStatus.SHIPPED:
+    case OrderStatus.Shipped:
       return MESSAGE_KEYS.orderShipped;
     default: {
       const _exhaustive: never = status;

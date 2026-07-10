@@ -46,7 +46,7 @@ it('isolates failures — a throwing side effect never propagates', async () => 
 });
 
 it('registers exactly one listener for the event', () => {
-  expect(emitter.listenerCount(AccountEvent.VERIFIED)).toBe(1); // bump N as handlers grow
+  expect(emitter.listenerCount(AccountEvent.Verified)).toBe(1); // bump N as handlers grow
 });
 ```
 
@@ -88,7 +88,7 @@ export class NotifyOnAccountVerifiedHandler {
     private readonly logger: AppLogger,
   ) {}
 
-  @OnEvent(AccountEvent.VERIFIED)
+  @OnEvent(AccountEvent.Verified)
   async handle(event: AccountVerifiedEvent): Promise<void> {
     try {
       await this.notifier.sendWelcome(event.accountId);
@@ -105,7 +105,7 @@ export class NotifyOnAccountVerifiedHandler {
 
 ```ts
 // DON'T — an unhandled throw aborts the publisher's success path
-@OnEvent(AccountEvent.VERIFIED)
+@OnEvent(AccountEvent.Verified)
 async handle(event: AccountVerifiedEvent): Promise<void> {
   await this.notifier.sendWelcome(event.accountId); // throws → "account verified" fails
 }

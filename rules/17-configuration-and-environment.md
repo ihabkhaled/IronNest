@@ -47,11 +47,17 @@ The process must **not** boot with invalid or missing configuration. Validation 
 ```ts
 // config/env.validation.ts — the gate every boot passes through.
 class EnvironmentVariables {
-  @IsEnum(NodeEnv) readonly NODE_ENV!: NodeEnv; // enum from @shared/enums
-  @IsInt() @Min(1) @Max(65535) @Type(() => Number) readonly PORT!: number;
-  @IsString() @MinLength(JWT_SECRET_MIN_LENGTH) readonly JWT_SECRET!: string;
-  @IsEnum(LogLevel) readonly LOG_LEVEL!: LogLevel;
-  @IsBoolean() @Transform(toBool) readonly ENABLE_OPENAPI_DOCS!: boolean;
+  @IsEnum(NodeEnv) declare readonly NODE_ENV: NodeEnv; // enum from @shared/enums
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  @Type(() => Number)
+  declare readonly PORT: number;
+  @IsString()
+  @MinLength(JWT_SECRET_MIN_LENGTH)
+  declare readonly JWT_SECRET: string;
+  @IsEnum(LogLevel) declare readonly LOG_LEVEL: LogLevel;
+  @IsBoolean() @Transform(toBool) declare readonly ENABLE_OPENAPI_DOCS: boolean;
 }
 
 export function validateEnv(
@@ -85,6 +91,9 @@ Validation rules to honor:
 - **Coerce explicitly.** Env is always strings; convert to `number`/`boolean`/`enum` in the schema, never with `Number(...)`/`=== 'true'` scattered in business code.
 - **Constrain.** `@Min/@Max`, `@MinLength`, `@IsUrl`, `@IsEnum`, allowed-value sets — a port of `0` or a 4-char secret must not boot.
 - **No magic literals.** Bounds and minimums (`JWT_SECRET_MIN_LENGTH`, `MAX_PORT`) are named constants per rules 8/13, not inline numbers.
+- **Every consumed key is validated.** A namespace may not read an env variable that the startup schema does not type and constrain.
+- **Every documented key is consumed.** Remove unused `.env.example` entries, config types, parsers, defaults, and docs as one surface; do not advertise speculative values ([27-no-token-burning-code.md](./27-no-token-burning-code.md)).
+- Config namespaces, keys, and policy maps have a dedicated `config/*.constants.ts` / `config/*.types.ts` / validation DTO owner; consumers do not repeat string keys or anonymous maps ([30-declaration-ownership.md](./30-declaration-ownership.md)).
 
 ---
 

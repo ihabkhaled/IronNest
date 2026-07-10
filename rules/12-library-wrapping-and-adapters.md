@@ -34,10 +34,13 @@ await this.mailer.send({ to, templateKey, data });
 `architecture/no-restricted-layer-imports` makes the boundary mechanical, not aspirational:
 
 - **Vendor packages may be imported only inside `adapters/` directories** (module `adapters/` or `core/`). A controller, service, use case, repository, guard, or DTO that imports a wrapped library is a lint **error** — `npm run lint` must be 0 errors / 0 warnings (rule 2).
+- A Nest module may import the vendor's module solely to register/configure the adapter provider. That does not authorize a service, guard, repository, or test fixture to inject the vendor service directly; consumers inject the app-owned port token.
 - `process.env` is restricted to `config/` and `bootstrap/`; an adapter takes its settings via injected typed config, it does not read env.
 - `no-restricted-syntax` bans inline `type`/`interface`/`enum`/`const` inside adapters — the **port interface and its types live in `model/` or `@shared/types`**, not in the adapter file ([06-types-enums-constants.md](./06-types-enums-constants.md)).
 
 > The list of "wrapped" packages is configured in [`/eslint/architecture.config.mjs`](../eslint/architecture.config.mjs). When you add a new external dependency, add it to that list so the boundary is enforced from day one. Record the package → adapter mapping in [/memory/library-boundaries.md](../memory/library-boundaries.md).
+
+The reference app currently enforces `bcrypt` → auth password adapter and `@nestjs/jwt` → auth JWT adapter (with `JwtModule` registration allowed only in `auth.module.ts`).
 
 ---
 
@@ -48,6 +51,8 @@ Three pieces, always, in this order:
 1. **Port interface** — a small, intention-revealing contract you own. Owned input/output types only; **no vendor types cross it**. Domain values are enums, not string unions. Lives in `model/<name>.types.ts` (or `@shared/types` if cross-module).
 2. **Implementation provider** — the single `@Injectable()` adapter that imports the SDK, reads its config, applies hardening + resilience, maps results to owned types, and maps failures to typed `AppError`s.
 3. **Module wiring** — bind the port token to the implementation with `{ provide: PORT, useClass: Adapter }`, and `export` the token so consumers inject the interface, not the concrete class.
+
+Authentication libraries follow the same rule as payment/mail/cache SDKs: password hashing and JWT signing/verification live behind owned ports; decoded payloads are runtime-validated before becoming an application identity.
 
 ```ts
 // model/mailer.types.ts — the PORT (you own this; SDK types never appear here)
@@ -127,7 +132,7 @@ When more than one vendor can satisfy the same port (e.g. two email providers, t
   provide: MAILER_PORT,
   inject: [mailerConfig.KEY, PrimaryAdapter, FallbackAdapter],
   useFactory: (cfg: MailerConfig, primary: MailerPort, fallback: MailerPort): MailerPort =>
-    cfg.provider === MailerProvider.PRIMARY ? primary : fallback,
+    cfg.provider === MailerProvider.Primary ? primary : fallback,
 }
 ```
 
@@ -189,8 +194,8 @@ export class PaymentProviderAdapter implements PaymentPort {
 
   public async charge(input: ChargeInput): Promise<ChargeResult> {
     const res = await this.http.request<ChargeResponseBody>({
-      method: HttpMethod.POST,
-      path: PaymentRoutes.CHARGE, // constant, not a magic string
+      method: HttpMethod.Post,
+      path: PaymentRoutes.Charge, // constant, not a magic string
       body: this.toRequestBody(input),
     });
     return this.toResult(res.data); // map vendor body → owned ChargeResult

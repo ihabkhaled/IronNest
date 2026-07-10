@@ -2,7 +2,7 @@
 
 > The house standard for backend security in this workspace. It implements the security canon in [00-non-negotiable-rules.md](./00-non-negotiable-rules.md) (rules 33–37) and the request lifecycle in [/context/architecture-map.md](../context/architecture-map.md). Authentication, authorization, and tenant isolation are **three distinct controls** — every protected route chains all three. These rules are non-negotiable; no ticket, prompt, or local habit relaxes them.
 
-Every control below lives in a **dedicated place in the right layer** (guards in `core/guards/`, the permission catalog in `shared/`, ownership checks in the application layer). Reuse them — never inline a one-off auth check in a controller or service.
+Every control below lives in a **dedicated place in the right layer** (identity/guards/decorators in `core/auth/`, the permission catalog in `shared/`, ownership checks in the application/domain/repository path). Reuse them — never inline a one-off auth check in a controller or service.
 
 ---
 
@@ -18,12 +18,12 @@ Every control below lives in a **dedicated place in the right layer** (guards in
 
 ## 1. Authentication — identity from the verified token
 
-A single global **auth guard** (`core/guards/jwt-auth.guard.ts`) verifies the bearer token on every route. Opt **out**, never in: routes are protected by default; only `@Public()` skips authentication.
+A single global **auth guard** (`core/auth/jwt-auth.guard.ts`) calls the auth token port on every route. Opt **out**, never in: routes are protected by default; only `@Public()` skips authentication.
 
-- The guard verifies the token with the **typed config secret** (`@config`), checks expiry, and attaches the decoded principal to the request. It maps verification failures to a typed `UnauthorizedError` (`errors.auth.invalid_token` / `errors.auth.token_expired`).
-- **Never read the JWT secret from `process.env`** outside `config/` and **never verify by hand** in a service. Verification is centralized in the guard (rule 27).
+- The guard calls an app-owned token port. The JWT adapter alone imports the signing library, verifies with typed config, runtime-validates the decoded principal, and returns an app-owned identity (or a normalized failure). The guard attaches only a validated principal and maps failure to a typed `UnauthorizedError`.
+- **Never read the JWT secret from `process.env`** outside `config/`, inject `JwtService`/a vendor client into business code, or verify by hand. Signing and verification are centralized behind the auth adapter/port (rules 27, 32).
 - **Token lifetimes come from config only.** Keep access tokens short (15–30 min) and refresh tokens bounded. The refresh secret is **separate** from the access secret — never sign refresh tokens with the access secret.
-- **Secret strength:** validate the signing secret at startup (≥ 32 bytes of entropy) via the env validation schema; fail fast on a weak/missing secret (rule 29). Rotation invalidates live tokens — document it as a behavior change.
+- **Secret strength:** require `NODE_ENV` and a signing secret at startup; enforce at least 32 UTF-8 bytes plus the configured uniqueness/placeholder policy, with stricter production checks. Fail fast on weak/missing values (rule 29).
 - **Refresh rotation is single-use and concurrency-safe.** On refresh, revoke the old session and issue a new pair; honor a short grace window so multi-tab/near-simultaneous refreshes don't revoke each other.
 
 ```ts
@@ -38,28 +38,28 @@ async create(@Body() body: CreateOrderDto): Promise<OrderResponseDto> {
 @Post()
 @RequirePermissions(Permission.OrderCreate)
 async create(
-  @CurrentUser() actor: AuthenticatedUser,
+  @CurrentUser() actor: AuthUserIdentity,
   @Body() dto: CreateOrderDto,
 ): Promise<OrderResponseDto> {
   return this.createOrderUseCase.execute(actor, dto); // one delegation (rule 18)
 }
 ```
 
-> `@CurrentUser()` and `@Public()` are custom param/route decorators (`core/decorators/`). The `AuthenticatedUser` shape lives in `@shared/types` — never declare it inline (rules 10–11).
+> `@CurrentUser()` and `@Public()` plus the `AuthUserIdentity`/token-port contracts live in `core/auth/` — never declare them inline (rules 10–11).
 
 ## 2. Authorization (RBAC) — permissions from a central catalog
 
-A **permissions guard** (`core/guards/permissions.guard.ts`) reads the metadata set by **`@RequirePermissions(...)`** and checks the actor's effective permissions. Authentication proves _who_; authorization proves _allowed to_.
+A **permissions guard** (`core/auth/permissions.guard.ts`) reads the metadata set by **`@RequirePermissions(...)`** and checks the actor's effective permissions. Authentication proves _who_; authorization proves _allowed to_.
 
-- **Resolve effective permissions server-side, not from the JWT.** The token may carry a role slug; the guard derives the permission set fresh per request (cache-backed, invalidated on role/permission change) so a grant change applies on the next request without re-issuing the token. If resolution can't run, the guard **rejects** — it never falls back to a stale map.
+- **Resolve effective permissions server-side, not from client input.** The token may carry validated role values; the guard derives effective permissions from the one server-owned role→permission catalog (or a project permission service). If resolution cannot run, the guard rejects—never trust raw permission strings from the token or request.
 - **The permission catalog is the single source of truth** — a frozen enum/`as const` map in `shared/` (e.g. `@shared/constants/permissions`). Categories follow `<resource>:<action>` (`order:create`, `order:read`, `order:read:own`, `invoice:approve`, `admin:access`). Never type the raw string at a call site.
-- **AND-semantics** when a route needs multiple grants: `@RequirePermissions(Permission.AdminAccess, Permission.OrderManage)` with `requireAll: true`. Default is ANY-of.
+- **AND-semantics by default:** every permission listed in `@RequirePermissions(...)` is required. If a product needs an explicit ANY-of policy, model it as a separate named decorator/metadata contract with dedicated tests—never an implicit boolean option.
 - **Least privilege by default.** New roles get the narrowest set that satisfies the use case. Prefer the **partial-relax** pattern — add narrow `:read` / `:read:own` permissions rather than one coarse grant — so admins can remove a single capability in the role→permission matrix without re-engineering the gate.
 
 ```ts
 // DON'T — raw permission literal; role check hand-rolled in the controller
 @Get(':id')
-async get(@CurrentUser() actor: AuthenticatedUser, @Param('id') id: string) {
+async get(@CurrentUser() actor: AuthUserIdentity, @Param('id') id: string) {
   if (actor.role !== 'admin') throw new ForbiddenException(); // ❌ rules 8, 17, 34
   return this.service.findById(id);
 }
@@ -68,32 +68,32 @@ async get(@CurrentUser() actor: AuthenticatedUser, @Param('id') id: string) {
 @Get(':id')
 @RequirePermissions(Permission.OrderRead)
 async getById(
-  @CurrentUser() actor: AuthenticatedUser,
+  @CurrentUser() actor: AuthUserIdentity,
   @Param('id') id: string,
 ): Promise<OrderResponseDto> {
   return this.orderService.getOwnedById(actor, id); // ownership inside (see §3)
 }
 ```
 
-> Define `@RequirePermissions` once in `core/decorators/`; it stamps `SetMetadata` with values from the catalog. See [/skills/add-guard-and-permission.md](../skills/add-guard-and-permission.md) and [/skills/create-error.md](../skills/create-error.md).
+> Define `@RequirePermissions` once in `core/auth/`; it stamps `SetMetadata` with values from the catalog. See [/skills/add-guard-and-permission.md](../skills/add-guard-and-permission.md) and [/skills/create-error.md](../skills/create-error.md).
 
 ## 3. Ownership & tenant isolation — IDOR / cross-tenant prevention (rule 35)
 
 A passing auth guard + permissions guard means the actor _may_ touch _some_ resource of this type — **not this specific one**. Every endpoint that takes a resource id by parameter **must** verify ownership/tenant scope. This is defense-in-depth: the guard authorizes the **action**, the application layer authorizes the **instance**.
 
 - **Never authorize from a client-supplied id.** Load the resource, then compare its **server-derived** owner/tenant field against the actor's id/tenant from the verified token.
-- **Scope multi-tenant reads in the query, never in memory.** Pass the tenant id into the `WHERE` clause; never fetch unbounded and filter afterward (an unbounded fetch leaks counts/timing and burns resources — see [09-performance-and-scalability.md](./09-performance-and-scalability.md)).
+- **Scope multi-tenant/owned reads in the query before ordering, pagination, and count, never afterward in memory.** Pass the trusted owner/tenant id into the repository; broad fetch-then-filter leaks counts/timing and creates sparse pages.
 - **A privileged "view any" path** (e.g. admin compliance) is an explicit, separate, permission-gated branch — never a silent bypass of the ownership check.
 - Centralize the rule in a reusable ownership policy (`domain/` or a shared guard) so every owned entity enforces it the same way.
 
 ```ts
 // DON'T — load by id with no tenant/owner check (classic IDOR / cross-tenant read)
-async getById(actor: AuthenticatedUser, id: string): Promise<Order> {
+async getById(actor: AuthUserIdentity, id: string): Promise<Order> {
   return this.repo.findById(id); // ❌ any authorized user reads any tenant's order
 }
 
 // DO — scope the query to the actor's tenant; deny on miss with a messageKey
-async getOwnedById(actor: AuthenticatedUser, id: string): Promise<Order> {
+async getOwnedById(actor: AuthUserIdentity, id: string): Promise<Order> {
   const order = await this.repo.findByIdForTenant(id, actor.tenantId);
   if (order === null) throw new NotFoundError('errors.order.not_found'); // not "forbidden" — don't confirm existence
   return order;
@@ -117,7 +117,7 @@ async update(id: string, body: Record<string, unknown>): Promise<Order> {
 }
 
 // DO — whitelisted DTO; privileged transition resolved server-side
-async update(actor: AuthenticatedUser, id: string, dto: UpdateOrderDto): Promise<Order> {
+async update(actor: AuthUserIdentity, id: string, dto: UpdateOrderDto): Promise<Order> {
   const order = await this.getOwnedById(actor, id);
   return this.repo.update(order.id, { title: dto.title, note: dto.note });
 }
@@ -190,14 +190,14 @@ Emit an audit event for privileged/state-changing actions (role/permission chang
 
 ```ts
 @Controller('orders')
-@UseGuards(JwtAuthGuard, PermissionsGuard) // module-wide: authn then authz
+// JwtAuthGuard then PermissionsGuard are wired globally; @Public() is the opt-out.
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Get(':id')
   @RequirePermissions(Permission.OrderRead) // authorization (catalog)
   getById(
-    @CurrentUser() actor: AuthenticatedUser, // identity from the verified token
+    @CurrentUser() actor: AuthUserIdentity, // identity from the verified token
     @Param('id', ParseUuidPipe) id: string, // validated transport input
   ): Promise<OrderResponseDto> {
     return this.orderService.getOwnedById(actor, id); // ownership/tenant inside (§3)

@@ -8,7 +8,7 @@ Related: [05-dto-and-validation.md](./05-dto-and-validation.md) · [04-repositor
 
 ## 1. The zero-inline policy (rules 10–16)
 
-A `*.controller.ts`, `*.service.ts`, `*.use-case.ts`, `*.repository.ts`, guard, interceptor, pipe, or adapter contains **only its primary class/function**. Every reusable type, enum, constant, DTO, request/response shape, and config map is extracted to a dedicated file and imported. The custom `architecture/no-inline-layer-declarations` rule mechanically rejects module-level `type`/`interface`/`enum`/`const`/`function` declarations inside controllers, services, use cases, repositories, adapters, guards, interceptors, and pipes (only a file-local `LOG_PREFIX` const is allowed).
+A `*.controller.ts`, `*.service.ts`, `*.use-case.ts`, `*.repository.ts`, guard, interceptor, pipe, filter, handler, or adapter contains **only its primary class/function**. Every reusable type, enum, constant, DTO, request/response shape, and config map is extracted to a dedicated file and imported. The custom `architecture/no-inline-layer-declarations` rule mechanically rejects module-level declarations and anonymous type-literal contracts in implementation layers (only a file-local `LOG_PREFIX` const is allowed). Full routing: [30-declaration-ownership.md](./30-declaration-ownership.md).
 
 | Artifact                       | Goes in                                                                    | Example path                                               |
 | ------------------------------ | -------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -17,6 +17,8 @@ A `*.controller.ts`, `*.service.ts`, `*.use-case.ts`, `*.repository.ts`, guard, 
 | Constants / config maps        | `model/<feature>.constants.ts` or `@shared/constants/<topic>.constants.ts` | `src/modules/order/model/order-sort.constants.ts`          |
 | DTOs & validation schemas      | `api/dto/<name>.dto.ts`                                                    | see [05-dto-and-validation.md](./05-dto-and-validation.md) |
 | Helpers / mappers / formatters | `lib/<feature>.helpers.ts`, `lib/<feature>.mappers.ts`                     | —                                                          |
+
+Use `*.interfaces.ts` only when the existing module deliberately separates injectable/port interfaces from data types; otherwise keep object contracts in the module's descriptive `*.types.ts`. One concern must never be split across both naming styles accidentally.
 
 ### DTOs vs. model types
 
@@ -89,14 +91,14 @@ order.status = 'published';
 
 // Do — compare and assign enum members
 import { OrderStatus } from '@shared/enums';
-if (order.status === OrderStatus.PENDING) {
+if (order.status === OrderStatus.Pending) {
   /* … */
 }
-order.status = OrderStatus.PUBLISHED;
+order.status = OrderStatus.Published;
 ```
 
 - **No string-union types.** `type Status = 'active' | 'inactive'` is banned — declare an enum.
-- **No string-literal switch cases, object keys, or event names** for domain concepts — use the member (`case OrderStatus.DRAFT:`, `emit(OrderEvent.PUBLISHED)`).
+- **No string-literal switch cases, object keys, or event names** for domain concepts — use the member (`case OrderStatus.Draft:`, `emit(OrderEvent.Published)`).
 - **Allowed literals:** `messageKey`s (`'errors.order.notFound'`), log messages/prefixes, regex, ORM column strings, and test descriptions. Everything else is suspect.
 
 ---
@@ -110,9 +112,9 @@ Each enum file exports the enum **plus a runtime `_VALUES` array**. Export a typ
 ```ts
 // src/shared/enums/notification-channel.enum.ts
 export enum NotificationChannel {
-  EMAIL = 'email',
-  SMS = 'sms',
-  EMAIL_AND_SMS = 'email_and_sms',
+  Email = 'email',
+  Sms = 'sms',
+  EmailAndSms = 'email_and_sms',
 }
 
 // Runtime string tuple — for ORM enum validation and generic runtime checks
@@ -122,9 +124,9 @@ export const NOTIFICATION_CHANNEL_VALUES = Object.values(
 
 // Typed const tuple — preserves enum-literal narrowing for schema validators
 export const NOTIFICATION_CHANNELS = [
-  NotificationChannel.EMAIL,
-  NotificationChannel.SMS,
-  NotificationChannel.EMAIL_AND_SMS,
+  NotificationChannel.Email,
+  NotificationChannel.Sms,
+  NotificationChannel.EmailAndSms,
 ] as const;
 ```
 
@@ -133,8 +135,8 @@ A minimal enum only needs the enum + `_VALUES`:
 ```ts
 // src/shared/enums/sort-order.enum.ts
 export enum SortOrder {
-  ASC = 'ASC',
-  DESC = 'DESC',
+  Asc = 'ASC',
+  Desc = 'DESC',
 }
 export const SORT_ORDER_VALUES = Object.values(SortOrder) as [
   string,
@@ -242,7 +244,7 @@ export type SortFieldMap = Record<string, string>;
 ```
 
 - **`unknown` over `any`** (rule 3). Narrow with type guards; type raw query results with a generic, never `any`.
-- **No non-null assertion (`!`)** (rule 7). Use `?.`, `??`, or an explicit guard.
+- **No non-null or definite-assignment assertion (`!`)** (rules 7, 47). Use `?.`, `??`, an explicit guard, constructor assignment, or `declare readonly` for framework-populated DTO fields.
 - **`exactOptionalPropertyTypes`** — never pass an explicit `undefined` to an optional field; spread it conditionally (see [05-dto-and-validation.md](./05-dto-and-validation.md)).
 - **Method types use property style** — `fn: () => void`, not `fn(): void` (`method-signature-style`).
 
@@ -254,7 +256,7 @@ export type SortFieldMap = Record<string, string>;
 | ------------------------------------ | -------------------------------------- | ------------------------------------------------ |
 | Files                                | `kebab-case` (`unicorn/filename-case`) | `order-status.enum.ts`, `order.repository.ts`    |
 | Enums / types / interfaces / classes | `PascalCase` (singular)                | `OrderStatus`, `OrderSummary`, `OrderRepository` |
-| Enum members                         | `UPPER_SNAKE_CASE`                     | `OrderStatus.PUBLISHED`                          |
+| Enum members                         | `PascalCase`                           | `OrderStatus.Published`                          |
 | Constants (incl. `_VALUES` / tuples) | `UPPER_SNAKE_CASE`                     | `SORT_ORDER_VALUES`, `ORDER_SORT_MAP`            |
 | Variables / functions                | `camelCase`                            | `findActiveByAccountId`                          |
 | DTO classes                          | `PascalCase` + `Dto`                   | `CreateOrderDto`                                 |
@@ -308,7 +310,7 @@ export class OrderService {
     }
     return {
       id: order.id,
-      status: order.status ?? OrderStatus.DRAFT,
+      status: order.status ?? OrderStatus.Draft,
       total: order.total,
     };
   }

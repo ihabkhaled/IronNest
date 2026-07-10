@@ -42,7 +42,7 @@ Not for authoring code, deep architecture review, or first-pass correctness revi
 - [ ] **NO-GO** — `npm run lint` is **0 errors AND 0 warnings**.
 - [ ] **NO-GO** — `npm run typecheck` (`tsgo --noEmit`, project-wide) clean.
 - [ ] **NO-GO** — `npm run test` passes; no `.only`, no silently skipped specs.
-- [ ] **NO-GO** — `npm run test:coverage` meets the ≥95% floor; **touched-module** coverage proven, not hidden behind a high global average.
+- [ ] **NO-GO** — coverage meets 95% statements/functions/lines and 90% measured branches; every real changed branch is proven.
 - [ ] **NO-GO** — `npm run build` compiles clean.
 - [ ] **NO-GO** — integration/e2e suites run when routes, persistence, migrations, or integrations changed.
 
@@ -112,7 +112,7 @@ NO-GO — migration adds a NOT NULL column with no default and no backfill;
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # ≥95% statements/branches/functions/lines; critical paths ~100%
+npm run test:coverage   # ≥95% statements/functions/lines; measured branches ≥90%; real critical branches ~100%
 npm run build           # nest build -p tsconfig.build.json
 ```
 

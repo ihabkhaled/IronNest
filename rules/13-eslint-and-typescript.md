@@ -117,9 +117,13 @@ import { CreateOrderUseCase } from '../application/create-order.use-case';
 import { HttpAdapter } from '@core/http/http.adapter';
 ```
 
-### `architecture/no-inline-layer-declarations` — no inline declarations
+### `architecture/no-inline-layer-declarations` — no inline or anonymous contracts
 
-In controllers, services, use cases, repositories, adapters, guards, interceptors, and pipes, module-level `const`, `enum`, `interface`, `type`, and helper `function` declarations are banned — move them to `model/<feature>.{types,enums,constants}.ts`, `lib/`, or `@shared/*`. The class is the only thing in the file (the sole exception is a file-local `LOG_PREFIX` const). `max-classes-per-file: 1` on the same globs blocks a second helper class. See [06-types-enums-constants.md](./06-types-enums-constants.md).
+In controllers, services, use cases, repositories, adapters, guards, interceptors, pipes, filters, and handlers, module-level `const`, `enum`, `interface`, `type`, helper `function`, and nested anonymous type-literal contracts are banned — move them to the owner in [30-declaration-ownership.md](./30-declaration-ownership.md). The class/function is the layer (the sole module-value exception is `LOG_PREFIX`). `max-classes-per-file: 1` blocks a second helper class.
+
+### `architecture/no-definite-assignment-assertions`
+
+`field!: Type` is an unchecked initialization escape hatch and is rejected in every TypeScript file. Decorated DTO/config fields use `declare readonly`; stateful classes initialize fields in a constructor.
 
 ```ts
 // Don't — inline declarations inside a service (no-inline-layer-declarations)
@@ -147,9 +151,9 @@ const [a, b] = await Promise.all([this.repo.findA(id), this.repo.findB(id)]);
 // Do — move multi-step orchestration to a use case / helper
 ```
 
-### `max-lines-per-function` on services
+### `max-lines-per-function` by implementation layer
 
-`*.service.ts` methods cap at **20** logical lines (`skipBlankLines`, `skipComments`). Overflow ⇒ extract to `lib/` (mappers, formatters, helpers) or escalate to a use case. Use `decompose-large-file` skill: [/skills/decompose-large-file.md](../skills/decompose-large-file.md).
+`*.service.ts` methods cap at **20** logical lines; other implementation-layer methods cap at **40** (`skipBlankLines`, `skipComments`). Overflow routes to the concern's real `lib/`/`domain/`/persistence/adapter owner or the matching split skill—never truncation or a cosmetic file split.
 
 > **Tests are exempt** (`test.config.mjs` turns this off) — fixtures and arrange-blocks are legitimately longer.
 
@@ -206,7 +210,9 @@ const meta: { actorId?: string } = {
 
 ## Test-file relaxations
 
-For `*.spec.ts` and `test/**/*.ts` (`test.config.mjs`): `no-unsafe-*`, `unbound-method`, `consistent-type-imports`, `no-extraneous-class`, `prefer-nullish-coalescing`, `only-throw-error`, `max-lines-per-function`, and `architecture/no-restricted-layer-imports` are **off** so tests can assemble fixtures and mock freely. Still enforced: **`no-explicit-any`, `no-non-null-assertion`, `no-unnecessary-type-assertion`**, and a **ban on `.only`** (focused tests must never be committed). Root `*.spec.ts` and all `*.{js,mjs,cjs}` are ignored from lint entirely.
+Services cap at 20 lines per method. Use cases, repositories, adapters, guards, pipes, interceptors, filters, and handlers cap at 40. Tests are exempt from method/file declaration caps but keep the no-definite-assignment rule.
+
+For `*.spec.ts` and `test/**/*.ts` (`test.config.mjs`): `no-unsafe-*`, `unbound-method`, `consistent-type-imports`, `no-extraneous-class`, `prefer-nullish-coalescing`, `only-throw-error`, layer declaration/class/method caps, and `architecture/no-restricted-layer-imports` are **off** so tests can assemble fixtures and mock freely. Still enforced: **`no-explicit-any`, `no-non-null-assertion`, `no-unnecessary-type-assertion`, `no-definite-assignment-assertions`**, and a **ban on `.only`**.
 
 ---
 
@@ -229,6 +235,7 @@ Fix the cause, never the symptom. Disabling a rule is a non-negotiable violation
 | `architecture/controller-no-logic`                  | Move branching/transformation into a use case/service; leave one delegation                                  |
 | `architecture/no-restricted-layer-imports`          | Depend through the correct layer / module `index.ts`; wrap vendor in an adapter                              |
 | `architecture/no-inline-layer-declarations`         | Extract to `model/*.types.ts` / `*.enums.ts` / `*.constants.ts` / `lib/*.helpers.ts`                         |
+| `architecture/no-definite-assignment-assertions`    | DTO: `declare readonly`; stateful class: initialize in the constructor                                       |
 | `no-restricted-syntax` (`Promise.all` in service)   | Move concurrency to a use case or `lib/` helper                                                              |
 | `max-lines-per-function` (service > 20)             | Extract helpers to `lib/`, or escalate to a use case                                                         |
 | `complexity` / `sonarjs/cognitive-complexity` (>15) | Extract named guards/policies/mappers per the routing in [23](./23-function-service-file-size-discipline.md) |

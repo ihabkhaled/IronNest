@@ -25,7 +25,7 @@ export class TransferFundsUseCase {
       await this.accounts.credit(input.toId, input.amount, tx);
       return this.transfers.record(input, tx);
     });
-    this.events.emit(AccountEvent.TRANSFERRED, result); // post-commit, fire-and-forget (§7)
+    this.events.emit(AccountEvent.Transferred, result); // post-commit, fire-and-forget (§7)
     return result;
   }
 }

@@ -9,10 +9,11 @@ These roles are **lenses on the specification**, not a substitute for it. The ca
 3. [/.cursor/rules/*.mdc](../.cursor/rules/) — the active Cursor-compatible rules.
 4. [/.cursorrules](../.cursorrules) — legacy Cursor compatibility only.
 5. [/codex.md](../codex.md) and [/cursor.md](../cursor.md) — human-readable mirrors/reference copies.
-6. [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) — the hard engineering rules for the NestJS backend.
-7. [/context/architecture-map.md](../context/architecture-map.md) — the layered architecture, the single source of truth for where code lives.
-8. [/context/stack-and-toolchain.md](../context/stack-and-toolchain.md) — the locked runtime, lint, test, and build toolchain.
-9. [/rules/README.md](../rules/README.md) — the full numbered rules pack.
+6. Root family files (`KIMI.md`, `GEMINI.md`, `GLM.md`, `QWEN.md`, `DEEPSEEK.md`, `MISTRAL.md`) — compact routers only.
+7. [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) — the hard subordinate engineering rules.
+8. [/context/architecture-map.md](../context/architecture-map.md) — the subordinate structural source of truth.
+9. [/context/stack-and-toolchain.md](../context/stack-and-toolchain.md) — the locked runtime, lint, test, and build toolchain.
+10. [/rules/README.md](../rules/README.md) — the full numbered rules pack.
 
 > If a role file ever contradicts `claude.md`, the architecture map, or the rules pack, the canon wins. Fix the role file.
 

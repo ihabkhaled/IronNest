@@ -132,7 +132,7 @@ it('creates an order, returns 201, and persists it for the owner', async () => {
   const persisted = await orders.findById(body.id); // verify the datastore, not the response
   expect(persisted).not.toBeNull();
   expect(persisted?.ownerId).toBe(seededUserId); // identity came from the token
-  expect(persisted?.status).toBe(OrderStatus.DRAFT); // enum member, never the string 'DRAFT'
+  expect(persisted?.status).toBe(OrderStatus.Draft); // enum member, never the raw string
 });
 ```
 
@@ -153,7 +153,7 @@ it('emits OrderCreated after commit', async () => {
   expect(res.status).toBe(201);
   expect(emit).toHaveBeenCalledWith(
     expect.objectContaining({
-      name: OrderEvent.CREATED,
+      name: OrderEvent.Created,
       payload: expect.objectContaining({ id: res.body.id }),
     }),
   );
@@ -248,7 +248,7 @@ npm run test:coverage
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical journeys ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; critical journeys ~100%
 npm run build           # compiles clean
 ```
 

@@ -41,12 +41,12 @@ All boundary validation lives in the DTO, not the handler. Caps and formats are 
 
 ```ts
 // api/dto/create-<feature>.dto.ts
-import { IsString, MaxLength } from 'class-validator';
+import { IsString, MaxLength } from '@core/validation';
 
 export class CreateArticleDto {
   @IsString()
   @MaxLength(200)
-  readonly title!: string;
+  declare readonly title: string;
 }
 ```
 
@@ -54,8 +54,7 @@ For list endpoints, the query DTO owns the pagination ceiling (the repository re
 
 ```ts
 // api/dto/list-<feature>-query.dto.ts
-import { Type } from 'class-transformer';
-import { IsInt, Max, Min, IsOptional } from 'class-validator';
+import { IsInt, IsOptional, Max, Min, Type } from '@core/validation';
 
 export class ListArticleQueryDto {
   @Type(() => Number)
@@ -87,10 +86,12 @@ import {
   ApiOperation,
   ApiCreatedResponse,
   ApiBearerAuth,
-} from '@nestjs/swagger';
-import { CurrentUser } from '@core/decorators/current-user.decorator';
-import { RequirePermissions } from '@core/decorators/require-permissions.decorator';
-import { AuthUser } from '@shared/types/auth-user.type';
+} from '@core/openapi';
+import {
+  type AuthUserIdentity,
+  CurrentUser,
+  RequirePermissions,
+} from '@core/auth';
 import { Permission } from '@shared/enums/permission.enum';
 import { ArticleService } from '@modules/article/application/article.service';
 import { CreateArticleDto } from '@modules/article/api/dto/create-article.dto';
@@ -104,11 +105,11 @@ export class ArticleController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermissions(Permission.ARTICLE_CREATE) // authorization, not just authentication
+  @RequirePermissions(Permission.ArticleCreate) // authorization, not just authentication
   @ApiOperation({ summary: 'Create an article' })
   @ApiCreatedResponse({ type: ArticleResponseDto })
   create(
-    @CurrentUser() user: AuthUser, // identity from the verified token — never the body
+    @CurrentUser() user: AuthUserIdentity, // identity from the verified token — never the body
     @Body() dto: CreateArticleDto, // already validated + transformed by the global pipe
   ): Promise<ArticleResponseDto> {
     return this.articleService.create(user.id, dto); // ONE delegation, ownership enforced below
@@ -141,8 +142,8 @@ detail(@Param('id') id: string): Promise<unknown> {
 
 // Do — one orchestration call; the use case composes the parts
 @Get(':id/detail')
-@RequirePermissions(Permission.ARTICLE_READ)
-detail(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleDetailDto> {
+@RequirePermissions(Permission.ArticleRead)
+detail(@CurrentUser() user: AuthUserIdentity, @Param('id') id: string): Promise<ArticleDetailDto> {
   return this.getArticleDetailUseCase.execute(user.id, id);
 }
 ```
@@ -154,7 +155,7 @@ detail(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleD
 
 ```ts
 // Do — let it throw; the filter formats the safe body, the interceptor wraps it
-getById(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleResponseDto> {
+getById(@CurrentUser() user: AuthUserIdentity, @Param('id') id: string): Promise<ArticleResponseDto> {
   return this.articleService.getById(user.id, id); // throws NotFoundAppError('errors.article.notFound')
 }
 ```

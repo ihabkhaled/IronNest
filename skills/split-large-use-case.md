@@ -1,8 +1,16 @@
 # Skill: Split a Large Use Case
 
-> A use case that grew into god orchestration gets split **by responsibility seam**, never by line count: `execute()` stays a **table of contents** for the operation, decisions move to **pure domain** policies/state machines, shaping moves to **`lib/` mappers**, side-effect dispatch moves to a focused service — and the **transaction boundary stays explicit and visible** the entire time. Implements [23-function-service-file-size-discipline.md](../rules/23-function-service-file-size-discipline.md) (rule **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)) and the transaction + ordered post-commit canon of [03-application-services-and-use-cases.md](../rules/03-application-services-and-use-cases.md).
+## Intent
 
-Use when a use case shows the symptoms: it owns decisions that should be pure domain code, repeated shaping or dispatch blocks appear, the transaction flow is hard to follow, or post-commit side effects mix with business decisions. When NOT this skill → an oversized service gets [split-large-service.md](./split-large-service.md), an oversized repository gets [split-large-repository.md](./split-large-repository.md), a mechanical file split at any layer is [decompose-large-file.md](./decompose-large-file.md), and promoting a service method into a _new_ use case is [create-use-case.md](./create-use-case.md).
+Restore an oversized use case to a readable table of contents while keeping one explicit transaction and ordered post-commit behavior.
+
+## When to use
+
+Use when a use case owns domain decisions, repeated shaping/dispatch, a hidden transaction, or mixed post-commit work.
+
+## When not to use
+
+Use the matching service/repository/adapter split skill for another layer; use [create-use-case.md](./create-use-case.md) when promoting a genuinely transactional operation.
 
 ---
 
@@ -57,7 +65,7 @@ Payload building, row shaping, and formatting leave the use case for named funct
 
 ```ts
 // Don't — event payload assembled inline in the use case
-this.events.emit(ArticleEvent.PUBLISHED, {
+this.events.emit(ArticleEvent.Published, {
   id: a.id,
   slug: a.slug,
   at: new Date().toISOString(),
@@ -66,7 +74,7 @@ this.events.emit(ArticleEvent.PUBLISHED, {
 // Do — the mapper owns the shape (toArticlePublishedEvent lives in
 // src/modules/article/lib/article.mappers.ts); the use case only emits
 this.events.emit(
-  ArticleEvent.PUBLISHED,
+  ArticleEvent.Published,
   toArticlePublishedEvent(result.article),
 );
 ```
@@ -88,6 +96,14 @@ The operation ends in a visible success, typed failure, or timeout (rules 38–3
 One structured line per milestone via the `@core/logger` adapter — operation succeeded, side effect failed, rollback happened — with correlating ids. Do not log every extracted step; noise buries the failure signal ([14-observability-and-logging.md](../rules/14-observability-and-logging.md)).
 
 ---
+
+## Checklist
+
+- [ ] Preconditions, rollback, errors, event order, and terminal states pinned first.
+- [ ] `execute()` shows guard → commit → post-commit events → result.
+- [ ] Domain decisions and mapping have pure owners.
+- [ ] One visible transaction; no external calls/events inside it.
+- [ ] Safety/observability behavior and dependency direction remain.
 
 ## Quality gates
 

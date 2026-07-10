@@ -133,7 +133,7 @@ export class BackfillOrderArchivedAtUseCase {
       cursor = ids[ids.length - 1] ?? cursor;
       this.log.info('backfill_progress', { processed, cursor });
     }
-    return { status: BackfillStatus.COMPLETED, processed };
+    return { status: BackfillStatus.Completed, processed };
   }
 }
 ```

@@ -178,7 +178,7 @@ it('creates an order, returns 201, and persists it for the owner', async () => {
 
   const persisted = await orders.findById(id); // truth on disk, not the HTTP body
   expect(persisted?.ownerId).toBe(seededUserId); // identity came from the token, not the body
-  expect(persisted?.status).toBe(OrderStatus.DRAFT); // enum member, never the string 'DRAFT'
+  expect(persisted?.status).toBe(OrderStatus.Draft); // enum member, never a raw string
 });
 ```
 
@@ -197,7 +197,7 @@ it('emits OrderCreated after commit and survives a delivery failure', async () =
   expect(ok.status).toBe(201);
   expect(emit).toHaveBeenCalledWith(
     expect.objectContaining({
-      name: OrderEvent.CREATED,
+      name: OrderEvent.Created,
       payload: expect.objectContaining({ id: (ok.body as { id: string }).id }),
     }),
   );
@@ -249,7 +249,7 @@ Network clients retry. E2E must document and prove the intended retry semantics 
 ```ts
 it('treats a repeated update as idempotent — same state, no extra event', async () => {
   const emit = vi.spyOn(app.get(EventPublisher), 'publish');
-  const body = { status: OrderStatus.CONFIRMED };
+  const body = { status: OrderStatus.Confirmed };
 
   const first = await http
     .patch(`/orders/${orderId}`)
@@ -263,7 +263,7 @@ it('treats a repeated update as idempotent — same state, no extra event', asyn
   expect(first.status).toBe(200);
   expect(second.status).toBe(200);
   const persisted = await orders.findById(orderId);
-  expect(persisted?.status).toBe(OrderStatus.CONFIRMED);
+  expect(persisted?.status).toBe(OrderStatus.Confirmed);
   expect(emit).toHaveBeenCalledTimes(1); // the no-op repeat emits no second event
 });
 
@@ -352,7 +352,7 @@ E2E contributes to the workspace coverage floor; it does not replace unit/integr
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical journeys ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; critical journeys ~100%
 npm run build           # compiles clean
 ```
 

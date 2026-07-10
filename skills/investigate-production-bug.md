@@ -25,7 +25,7 @@ Before reading much code, capture the report (inputs, identity, expected vs. act
 ```ts
 // Reproduce the reported defect: a soft-deleted Account is still returned.
 it('excludes soft-deleted accounts from the owner listing (bug #1234)', async () => {
-  const owner = await seedAccount({ ownerId, status: AccountStatus.ACTIVE });
+  const owner = await seedAccount({ ownerId, status: AccountStatus.Active });
   await softDeleteAccount(owner.id);
 
   const result = await service.listForOwner(ownerId, { limit: 20 });
@@ -42,7 +42,7 @@ Follow the request through the layers to find every place the defect could live.
 
 ```
 HTTP route
-  → Guard(s)        auth → permissions(RBAC) → ownership/tenant   core/guards
+  → Guard(s)        auth → permissions (core/auth) → ownership/tenant (application/domain)
   → ValidationPipe  is the DTO accepting bad input?                api/dto
   → Controller      thin delegation — almost never the bug         api/*.controller.ts
   → Use case/Service orchestration, transaction boundary           application/*
@@ -57,7 +57,7 @@ Classify the defect into exactly one layer before touching code:
 | ------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | Bad/missing input accepted            | DTO / validation                         | `api/dto/`, [05-dto-and-validation.md](../rules/05-dto-and-validation.md)                                |
 | Wrong status / business outcome       | Domain policy / state machine            | `domain/`, [03-application-services-and-use-cases.md](../rules/03-application-services-and-use-cases.md) |
-| Forbidden access / cross-tenant leak  | Guard + ownership check                  | `core/guards/`, [07-security-authn-authz.md](../rules/07-security-authn-authz.md)                        |
+| Forbidden access / cross-tenant leak  | Auth/permission guard + ownership scope  | `core/auth/` + application/repository, [07-security-authn-authz.md](../rules/07-security-authn-authz.md) |
 | Wrong/leaking/unbounded data          | Repository query                         | `infrastructure/`, [04-repositories-and-persistence.md](../rules/04-repositories-and-persistence.md)     |
 | Slow / N+1 / timeout                  | Repository / service batching            | [09-performance-and-scalability.md](../rules/09-performance-and-scalability.md)                          |
 | External call fails / crashes process | Adapter resilience                       | `adapters/`, [10-reliability-and-durability.md](../rules/10-reliability-and-durability.md)               |
@@ -101,7 +101,7 @@ async listForOwner(ownerId: string, query: ListQuery): Promise<AccountList> {
 // Do — fix the repository query that owns the data contract
 async findActiveByOwner(ownerId: string, query: PageQuery): Promise<Page<Account>> {
   return this.queryByOwner(ownerId)
-    .where('status != :status', { status: AccountStatus.DELETED }) // parameterized, enum member
+    .where('status != :status', { status: AccountStatus.Deleted }) // parameterized, enum member
     .take(clampLimit(query.limit)) // bounded, hard max 100
     .getManyAndCount()
     .then(toPage);

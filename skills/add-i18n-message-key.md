@@ -82,10 +82,10 @@ async finalize(id: string, actor: AuthIdentity): Promise<FeatureEntity> {
   const entity = await this.repository.findById(id); // repo returns null, doesn't throw
   if (entity === null) throw new NotFoundError(FEATURE_MESSAGE_KEYS.NOT_FOUND, { id });
   if (entity.ownerId !== actor.id) throw new ForbiddenError(FEATURE_MESSAGE_KEYS.FORBIDDEN_NOT_OWNER);
-  if (entity.status === FeatureStatus.FINALIZED) {
+  if (entity.status === FeatureStatus.Finalized) {
     throw new ConflictError(FEATURE_MESSAGE_KEYS.ALREADY_FINALIZED, { id });
   }
-  return this.repository.update(id, { status: FeatureStatus.FINALIZED });
+  return this.repository.update(id, { status: FeatureStatus.Finalized });
 }
 ```
 
@@ -105,7 +105,7 @@ If a new `AppError` subclass or filter change is required, hand off to [create-e
 ```ts
 // api/dto/create-<feature>.dto.ts — Do: a stable key, never a localized sentence
 @IsPositive({ message: FEATURE_MESSAGE_KEYS.FIELD_AMOUNT_POSITIVE }) // 'errors.<feature>.field.amount.positive'
-amount!: number;
+declare readonly amount: number;
 ```
 
 ### 5. Translate the key in every supported locale (same change)

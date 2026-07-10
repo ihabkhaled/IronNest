@@ -44,7 +44,7 @@ const event = { type, ...(actorId === undefined ? {} : { actorId }) };
 
 - **Symptom:** `entity.status === 'active'` either fails `no-unsafe-enum-comparison` or — worse — silently never matches after a refactor.
 - **Cause:** `entity.status` is an enum member; comparing it to a hand-typed string is a magic-string comparison (rules 8, 9).
-- **Fix:** compare against the enum member from `@shared/enums` or `model/<feature>.enums.ts` — `entity.status === AccountStatus.ACTIVE`. This is the single most-repeated mistake despite the zero-string-literals policy.
+- **Fix:** compare against the enum member from `@shared/enums` or `model/<feature>.enums.ts` — `entity.status === AccountStatus.Active`. This is the single most-repeated mistake despite the zero-string-literals policy.
 
 ### B2. Non-exhaustive `switch` on an enum / union
 
@@ -232,7 +232,7 @@ See [04-repositories-and-persistence.md](../rules/04-repositories-and-persistenc
 
 ### I3. Decorator metadata injects uncoverable branches in entities
 
-- **Symptom:** coverage dips below the 95% floor on decorated entity/DTO files for branches you can't reach.
+- **Symptom:** measured branch coverage dips because decorated classes add branches you cannot execute.
 - **Cause:** the transform emits synthetic `typeof X === 'undefined' ? Object : X` guards per decorated property.
 - **Fix:** exclude pure type/enum/constant/entity-shape files from coverage; test the **real logic** (lifecycle hooks, mappers, policies) elsewhere. Don't chase synthetic branches. See [11-testing-and-coverage.md](../rules/11-testing-and-coverage.md), [coverage-policy.md](../testing/coverage-policy.md), and [testing-strategy.md](./testing-strategy.md).
 
@@ -270,6 +270,36 @@ See [04-repositories-and-persistence.md](../rules/04-repositories-and-persistenc
 - **Cause:** extracting to satisfy line-count fashion instead of responsibility ownership.
 - **Fix:** split by responsibility only ([23 §5](../rules/23-function-service-file-size-discipline.md)); inline the fragments back if each file has no reason to change independently.
 
+### J6. Anonymous contract hidden inside a generic/signature
+
+- **Symptom:** the layer file has no module-level `interface`, yet `getRequest<{ ... }>()` or `Promise<{ ... }>` still hides a reusable request/result contract.
+- **Cause:** zero-inline cleanup checked declarations but missed type literals nested in signatures.
+- **Fix:** move the shape to its `model/`, `core/`, `shared/`, or DTO owner and import it; the architecture lint rule rejects type literals in implementation layers (rule 47).
+
+### J7. DTO definite-assignment assertion treated as harmless
+
+- **Symptom:** `readonly field!: string` survives despite the no-assertion policy.
+- **Cause:** confusing TypeScript's definite-assignment assertion with harmless declaration syntax.
+- **Fix:** use decorated `declare readonly field: string` (or constructor assignment) and keep every validator/OpenAPI decorator. Static enforcement rejects the assertion.
+
+### J8. Ownership filtered after pagination/count
+
+- **Symptom:** owned lists return sparse pages or a total that includes another owner/tenant; timing/count leaks remain.
+- **Cause:** repository fetched a broad page and service filtered it in memory.
+- **Fix:** require trusted owner/tenant input in the repository and scope before ordering, count, and pagination; keep application-layer defense (rules 35, 37).
+
+### J9. Security vendor documented as a direct-use exception
+
+- **Symptom:** JWT/bcrypt/crypto service imports spread through services, guards, repositories, and tests.
+- **Cause:** treating a small library as too basic to deserve the adapter boundary.
+- **Fix:** app-owned port + sole adapter importer + package-boundary test; runtime-validate vendor output before trusting it (rule 32).
+
+### J10. `.env.example` advertises keys no runtime consumes
+
+- **Symptom:** operators configure values that have no effect, while consumed keys lack validation.
+- **Cause:** examples, config namespaces, validation schema, and docs evolved separately.
+- **Fix:** every consumed key is validated and every documented key is consumed; remove stale keys as a complete surface (rules 29, 49).
+
 ---
 
 ## Checklist before writing code
@@ -284,6 +314,7 @@ See [04-repositories-and-persistence.md](../rules/04-repositories-and-persistenc
 - [ ] DTO decorates every field; identity from token not body (G1, G3)
 - [ ] No `process.env` in business code; typed `AppError` with `messageKey`; no inline constants (H1, H2, H3)
 - [ ] Simple Code Ladder run: owner reused, no speculative abstraction, boring direct version, no safety cut (J1–J5)
+- [ ] No anonymous layer contracts/DTO assertions; owner scope precedes pagination; vendors/config examples have one real owner (J6–J10)
 - [ ] `lint` / `typecheck` / `test` / `test:coverage` / `build` green — never `--no-verify` (I1)
 
 **Related:** [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) · [reliability-patterns.md](./reliability-patterns.md) · [performance-decisions.md](./performance-decisions.md) · [security-decisions.md](./security-decisions.md) · [code-simplicity-decisions.md](./code-simplicity-decisions.md) · [testing-strategy.md](./testing-strategy.md) · [ai-context-map.md](./ai-context-map.md)

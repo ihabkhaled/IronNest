@@ -1,8 +1,16 @@
 # Skill: Remove Unnecessary Code
 
-> Deletion requires **proof**, not absence-of-references — grep every call site, check DI wiring and **dynamic lookups** (config keys, event names) before removing anything, then delete the **entire surface** (exports, barrels, dead tests, docs, `.env.example`, config validation) with every gate green, and never mistake a **safety control** for dead code. Implements [21-yagni-and-minimalism.md](../rules/21-yagni-and-minimalism.md) (rule **44** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
+## Intent
 
-Use this skill for dead code, unused env vars, unused config values, unused helpers/adapters/providers, abstractions with no real use, and overbuilt (often AI-generated) features. If the code is **alive** but convoluted, that is not deletion — use [simplify-existing-code.md](./simplify-existing-code.md) or [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md); if the file is merely too big, use [decompose-large-file.md](./decompose-large-file.md).
+Prove a surface is dead, then remove its code, wiring, exports, config, tests, and docs without deleting a safety control.
+
+## When to use
+
+Use for dead code, unused env/config, unused providers/helpers/adapters, and speculative abstractions with no current boundary.
+
+## When not to use
+
+Alive but convoluted code needs simplification; oversized code needs a focused split. A guard, bound, validator, error mapping, or fallback is not dead merely because references are indirect.
 
 ---
 
@@ -82,6 +90,14 @@ npm run security:scan
 If the deletion reflects a durable choice ("no legacy article export", "no cache layer until three real call sites"), record it in [code-simplicity-decisions.md](../memory/code-simplicity-decisions.md) so the same abstraction is not rebuilt next quarter.
 
 ---
+
+## Checklist
+
+- [ ] Symbol, string key, DI, dynamic lookup, export, and test usage checked.
+- [ ] Surviving behavior tests were green before deletion.
+- [ ] Entire dead surface removed, including `.env.example` and docs.
+- [ ] No validation/security/auth/ownership/bound/observability control removed.
+- [ ] Decision recorded when it prevents speculative reintroduction.
 
 ## Quality gates
 

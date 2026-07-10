@@ -1,8 +1,16 @@
 # Skill: Extract a Helper Safely
 
-> Move repeated or hard-to-scan logic into **one named owner** — verb-based name, **typed input/output**, **pure where possible**, tests FIRST when it owns meaningful logic, **every call site replaced** — and never extract to hide a side effect or an architecture violation. Implements [23-function-service-file-size-discipline.md §4](../rules/23-function-service-file-size-discipline.md) (rule **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)) and [22-reuse-before-creating.md](../rules/22-reuse-before-creating.md) (rule **45**).
+## Intent
 
-Use this skill when repeated logic appears at 2–3 real call sites, a complex condition needs a name, a mapper is hard to scan, guard logic repeats, extraction improves testability, or one business rule needs one clear owner. When the problem is a whole oversized file rather than one piece of logic, NOT this skill → use [decompose-large-file.md](./decompose-large-file.md) or [split-large-service.md](./split-large-service.md); for broader cleanup of existing code → [simplify-existing-code.md](./simplify-existing-code.md).
+Give repeated or meaningful hard-to-scan logic one named, typed, test-backed owner without hiding side effects or architecture violations.
+
+## When to use
+
+Use for two-to-three real call sites, a named security/business decision, a meaningful mapper/validator, or an extraction required by a layer budget.
+
+## When not to use
+
+Do not wrap one obvious line, hide I/O/vendor access, or split a whole oversized file; use the matching split/cleanup skill.
 
 ---
 
@@ -81,6 +89,14 @@ Delete every duplicate in the same change — a half-migration leaves two owners
 Module-local helpers stay out of the barrel; cross-module consumers import through `index.ts` / `@shared` public surfaces, never deep paths (rule 24). Confirm no cycle appeared between `lib/`, `domain/`, and `model/`. `import-x/no-cycle` runs with `maxDepth: 1`, so lint catches only **direct** two-file cycles — a longer chain (`lib` → `domain` → `model` → `lib`) passes lint and must be checked by reading the imports.
 
 ---
+
+## Checklist
+
+- [ ] Current need and existing owner confirmed.
+- [ ] Correct `lib`/`domain`/`shared`/`core` owner selected.
+- [ ] Meaningful logic tested first; helper is typed and pure where possible.
+- [ ] Every duplicate call site migrated and old logic deleted.
+- [ ] No cycle, hidden side effect, or safety regression.
 
 ## Quality gates
 

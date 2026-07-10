@@ -31,7 +31,7 @@ The **Service is the default.** Escalate to a **Use case** only when the excepti
 
 **MAY:** inject repositories/adapters/domain policies in the constructor; check preconditions the schema can't express (existence, ownership defense-in-depth, current-state legality); delegate business rules to `domain/`; call adapters and `@core` services; return typed entities/DTOs; throw typed `AppError`s with a `messageKey`.
 
-**MUST NOT:** touch HTTP request/response objects (that's the controller — [02-controllers-and-http-transport.md](./02-controllers-and-http-transport.md)); define inline types/interfaces/enums/constants/DTOs/config-maps ([06-types-enums-constants.md](./06-types-enums-constants.md), rules 10–16); do inline mapping/formatting/string-building (extract to `lib/`); re-implement validation that belongs in the DTO ([05-dto-and-validation.md](./05-dto-and-validation.md)); read `process.env` (use `@config`); compare domain strings (use enum members); instantiate vendor SDKs (go through an adapter — [12-library-wrapping-and-adapters.md](./12-library-wrapping-and-adapters.md)); let a side-effect failure crash the workflow.
+**MUST NOT:** touch HTTP request/response objects (that's the controller — [02-controllers-and-http-transport.md](./02-controllers-and-http-transport.md)); define inline types/interfaces/enums/constants/DTOs/config-maps or anonymous parameter/result shapes ([06-types-enums-constants.md](./06-types-enums-constants.md), [30-declaration-ownership.md](./30-declaration-ownership.md)); do inline mapping/formatting/string-building (extract to `lib/`); re-implement validation that belongs in the DTO ([05-dto-and-validation.md](./05-dto-and-validation.md)); read `process.env` (use `@config`); compare domain strings (use enum members); instantiate or inject vendor SDK services directly (depend on an app-owned port — [12-library-wrapping-and-adapters.md](./12-library-wrapping-and-adapters.md)); let a side-effect failure crash the workflow.
 
 ### DTOs and model types — the boundary
 
@@ -82,7 +82,7 @@ export class OrderService {
     assertOwnership(order.ownerId, actorId); // precondition: ownership (lib/)
     const published = await transitionOrder(
       order,
-      OrderAction.PUBLISH,
+      OrderAction.Publish,
       actorId,
     ); // domain decides
     this.logger.info(`${LOG_PREFIX} publishOrder ok`, { orderId, actorId });
@@ -120,7 +120,7 @@ const label = formatOrderLabel(order); // lib/order.formatters.ts
 const rows = toOrderListRows(orders); // lib/order.mappers.ts
 ```
 
-See [decompose-large-file.md](../skills/decompose-large-file.md) for the mechanical workflow.
+See [decompose-large-file.md](../skills/decompose-large-file.md) and [28-codebase-refactor-discipline.md](./28-codebase-refactor-discipline.md) for the responsibility-sliced workflow. A pass-through service is retained only when it is the documented public/DI boundary for a private repository or several focused collaborators; otherwise remove it.
 
 ---
 
@@ -154,7 +154,7 @@ private async commitAward(order: Order, input: AcceptQuoteInput): Promise<AwardR
   return this.uow.runInTransaction(async tx => {
     const quote = await tx.quotes.markAccepted(input.quoteId);
     await tx.quotes.rejectCompeting(order.id, input.quoteId);
-    const awarded = await tx.orders.transition(order, OrderAction.AWARD);
+    const awarded = await tx.orders.transition(order, OrderAction.Award);
     await tx.invitations.resolve(order.id);
     return { order: awarded, quote };
   });
@@ -254,7 +254,7 @@ throw new ConflictError(
 );
 throw new StateTransitionError(
   order.status,
-  OrderAction.PUBLISH,
+  OrderAction.Publish,
   'errors.order.invalidTransition',
 );
 ```

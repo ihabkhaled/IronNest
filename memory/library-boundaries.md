@@ -28,13 +28,7 @@ We wrap because the boundary buys us five things in one place: typed config, har
 
 ### Recorded direct-use exceptions
 
-Every library used directly must be named here with its justifying column from the table above — an unrecorded direct import is a defect, not an exception.
-
-| Library  | Used directly in                                                                                                        | Why (per the decision rule)                                                                                                                                                                                                                                                                                           |
-| -------- | ----------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bcrypt` | `src/modules/auth/lib/password.helpers.ts` (verify), `src/modules/users/infrastructure/users.repository.ts` (seed hash) | Pure, deterministic **hashing primitive** — no network, no secrets, no config, no vendor error types. Consumed through named helpers, never imported into a service/use-case body. Swapping the KDF is a one-helper change; cost factor and rotation policy live in [security-decisions.md](./security-decisions.md). |
-
-> **Project records:** when a project introduces a second KDF, a pepper, or a hashing service, promote this to a `PasswordHasherPort` + adapter ([/skills/add-library-adapter.md](../skills/add-library-adapter.md)) and delete the exception row.
+No security-vendor direct-use exception remains. `bcrypt` and `@nestjs/jwt` are imported only by the auth adapters (plus JWT module registration in `auth.module.ts`), enforced by package-boundary tests.
 
 ---
 
@@ -66,6 +60,7 @@ These are the recurring concerns a backend wraps. Vendors are illustrative **exa
 | Payment                    | module `adapters/`                            | `PaymentPort.charge`/`refund`                      | a payment provider                                   | idempotency keys, owned result types, error mapping                                   |
 | External lookup / registry | module `adapters/`                            | `<Domain>LookupPort.fetch(...)`                    | a third-party data API                               | base URL, auth, response typing, caching policy                                       |
 | Token signing              | module `adapters/` (e.g. auth)                | `TokenPort.sign`/`verify`                          | any JWT/crypto library                               | algorithm + key config, expiry, claim shaping; library imported nowhere else          |
+| Password verification      | module `adapters/` (e.g. auth)                | `PasswordHashPort.matches`                         | bcrypt/argon2/scrypt provider                        | KDF invocation, vendor failure containment, one mock/swap surface                     |
 | Antivirus / content scan   | module `adapters/`                            | `ContentScanPort.scan(stream)`                     | a scanning daemon over its protocol                  | connection config, stream limits, health surfacing                                    |
 
 ### Foundational vs. feature adapters
@@ -85,9 +80,9 @@ Not everything earns a port. These are wired at the framework edge or consumed a
 | Rate limiting / throttling                                                           | global guard/interceptor in `core/` | already a Nest construct at the edge; configured once                      |
 | File-upload parsing (`multer`-style)                                                 | a pipe/interceptor in `core/`       | edge concern; the _scanner_ behind it is wrapped, the parser need not be   |
 | API docs generation (OpenAPI/Swagger)                                                | `bootstrap/swagger.ts`              | dev/ops tooling, not runtime product behavior                              |
-| Pure utilities (uuid, date math, hashing primitive)                                  | `@shared/utils/*`                   | deterministic, no config/secrets/network — a `shared` helper is sufficient |
+| Pure utilities (uuid, non-security date/math transforms)                             | `@shared/utils/*`                   | deterministic, no config/secrets/network — a `shared` helper is sufficient |
 
-> Boundary nuance: a password-hashing or token library used **only inside one auth service/adapter** is an acceptable service-level wrapper — the rule is "import it in exactly one place," not "create a separate `adapters/` file for everything." If it crosses module boundaries or needs swapping, promote it to a port.
+> Boundary nuance: Nest's JWT module is registered in `auth.module.ts`, but application services and guards still depend on the app-owned token port. Framework registration is not permission for direct vendor injection.
 
 ---
 

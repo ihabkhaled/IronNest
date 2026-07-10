@@ -7,7 +7,7 @@ Unit tests prove **one unit in isolation** — a service, use case, domain polic
 ## Rules this skill enforces
 
 - **Tests come first.** No behavior change ships without tests in the same change ([rule 42](../rules/00-non-negotiable-rules.md)).
-- **Coverage floor 95%** on statements/branches/functions/lines; critical paths near 100% ([/testing/coverage-policy.md](../testing/coverage-policy.md)).
+- **Coverage floor:** 95% statements/functions/lines, 90% measured branches for decorator artifacts, and every real touched branch covered ([/testing/coverage-policy.md](../testing/coverage-policy.md)).
 - **Mock at the boundary, not inside the unit** — double the repository/adapter/collaborator, exercise the real logic under test.
 - **Every typed `AppError` path is asserted** — error class _and_ `messageKey` ([rule 26](../rules/00-non-negotiable-rules.md), [/skills/create-error.md](./create-error.md)).
 - **No magic strings / domain string comparisons** — assert against enum members, never raw literals ([rules 8–9](../rules/00-non-negotiable-rules.md)).
@@ -79,12 +79,12 @@ Keep fixtures minimal and realistic. One behavior per `it`; assert both the **re
 
 ```ts
 it('returns the order for the owner', async () => {
-  const order = { id: 'order-1', ownerId: 'user-1', status: OrderStatus.DRAFT };
+  const order = { id: 'order-1', ownerId: 'user-1', status: OrderStatus.Draft };
   repo.findById.mockResolvedValue(order);
 
   const result = await service.getOwned('order-1', 'user-1');
 
-  expect(result.status).toBe(OrderStatus.DRAFT); // enum member, not 'DRAFT'
+  expect(result.status).toBe(OrderStatus.Draft); // enum member, not 'draft'
   expect(repo.findById).toHaveBeenCalledWith('order-1');
 });
 ```
@@ -109,7 +109,7 @@ it('throws ForbiddenError on cross-owner access', async () => {
   repo.findById.mockResolvedValue({
     id: 'order-1',
     ownerId: 'user-2',
-    status: OrderStatus.DRAFT,
+    status: OrderStatus.Draft,
   });
   await expect(service.getOwned('order-1', 'user-1')).rejects.toBeInstanceOf(
     ForbiddenError,
@@ -141,16 +141,16 @@ Use `mockResolvedValueOnce` chains for read-modify-read flows; assert call **ord
 ```ts
 it('reloads after update', async () => {
   repo.findById
-    .mockResolvedValueOnce({ id: 'order-1', status: OrderStatus.DRAFT })
-    .mockResolvedValueOnce({ id: 'order-1', status: OrderStatus.SUBMITTED });
+    .mockResolvedValueOnce({ id: 'order-1', status: OrderStatus.Draft })
+    .mockResolvedValueOnce({ id: 'order-1', status: OrderStatus.Submitted });
   repo.save.mockResolvedValue(undefined);
 
   const result = await service.submit('order-1', 'user-1');
 
   expect(repo.save).toHaveBeenCalledWith(
-    expect.objectContaining({ status: OrderStatus.SUBMITTED }),
+    expect.objectContaining({ status: OrderStatus.Submitted }),
   );
-  expect(result.status).toBe(OrderStatus.SUBMITTED);
+  expect(result.status).toBe(OrderStatus.Submitted);
 });
 ```
 
@@ -160,7 +160,7 @@ No DI, no mocks — feed inputs, assert outputs and thrown invariants. These are
 
 ```ts
 it('rejects an illegal state transition', () => {
-  expect(() => assertTransition(OrderStatus.CLOSED, OrderStatus.DRAFT)).toThrow(
+  expect(() => assertTransition(OrderStatus.Closed, OrderStatus.Draft)).toThrow(
     InvalidTransitionError,
   );
 });
@@ -194,7 +194,7 @@ npx vitest run src/modules/order/application/order.service.spec.ts \
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 

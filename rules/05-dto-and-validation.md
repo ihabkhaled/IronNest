@@ -26,7 +26,7 @@ The DTO is the only thing the controller hands to the application method. Identi
 
 ## 2. DTOs live in `api/dto/` only — never inline (rules 10–16)
 
-Every DTO class lives in `src/modules/<feature>/api/dto/<name>.dto.ts`. Defining a class, type, or interface inline in a controller, service, use case, or repository is banned by ESLint `no-restricted-syntax`.
+Every DTO class lives in `src/modules/<feature>/api/dto/<name>.dto.ts`. Defining a class, type, interface, or anonymous request shape inline in a controller, service, use case, or repository is banned by the architecture plugin. Decorated DTO properties use `declare readonly`; a definite-assignment assertion (`!`) is still an assertion and is forbidden by rules 7 and 47.
 
 ```ts
 // Do — in api/dto/create-article.dto.ts
@@ -34,7 +34,7 @@ export class CreateArticleDto {
   @ApiProperty({ maxLength: ARTICLE_TITLE_MAX })
   @IsString()
   @MaxLength(ARTICLE_TITLE_MAX, { message: 'errors.article.title.maxLength' })
-  readonly title!: string;
+  declare readonly title: string;
 }
 ```
 
@@ -85,7 +85,7 @@ Bound **every** string (`@MaxLength`) and **every** array (`@ArrayMaxSize`). Use
 
 ```ts
 // api/dto/create-article.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@core/openapi';
 import {
   ArrayMaxSize,
   IsArray,
@@ -96,8 +96,8 @@ import {
   Max,
   MaxLength,
   Min,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+  Type,
+} from '@core/validation';
 import { ArticleVisibility } from '@modules/article/model/article.enums';
 import {
   ARTICLE_BODY_MAX,
@@ -109,16 +109,16 @@ export class CreateArticleDto {
   @ApiProperty({ maxLength: ARTICLE_TITLE_MAX })
   @IsString({ message: 'errors.article.title.invalid' })
   @MaxLength(ARTICLE_TITLE_MAX, { message: 'errors.article.title.maxLength' })
-  readonly title!: string;
+  declare readonly title: string;
 
   @ApiProperty({ maxLength: ARTICLE_BODY_MAX })
   @IsString({ message: 'errors.article.body.invalid' })
   @MaxLength(ARTICLE_BODY_MAX, { message: 'errors.article.body.maxLength' })
-  readonly body!: string;
+  declare readonly body: string;
 
   @ApiProperty({ enum: ArticleVisibility })
   @IsEnum(ArticleVisibility, { message: 'errors.article.visibility.invalid' })
-  readonly visibility!: ArticleVisibility;
+  declare readonly visibility: ArticleVisibility;
 
   @ApiPropertyOptional({ type: [String], maxItems: ARTICLE_TAGS_MAX })
   @IsOptional()
@@ -141,7 +141,7 @@ export class CreateArticleDto {
 
 ```ts
 // api/dto/update-article.dto.ts
-import { PartialType } from '@nestjs/swagger';
+import { PartialType } from '@core/openapi';
 import { CreateArticleDto } from '@modules/article/api/dto/create-article.dto';
 
 export class UpdateArticleDto extends PartialType(CreateArticleDto) {}
@@ -151,18 +151,18 @@ export class UpdateArticleDto extends PartialType(CreateArticleDto) {}
 
 ```ts
 // api/dto/article-response.dto.ts
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { ApiProperty } from '@core/openapi';
+import { Exclude, Expose } from '@core/validation';
 import { ArticleVisibility } from '@modules/article/model/article.enums';
 
 @Exclude()
 export class ArticleResponseDto {
-  @Expose() @ApiProperty() readonly id!: string;
-  @Expose() @ApiProperty() readonly title!: string;
+  @Expose() @ApiProperty() declare readonly id: string;
+  @Expose() @ApiProperty() declare readonly title: string;
   @Expose()
   @ApiProperty({ enum: ArticleVisibility })
-  readonly visibility!: ArticleVisibility;
-  @Expose() @ApiProperty() readonly createdAt!: string;
+  declare readonly visibility: ArticleVisibility;
+  @Expose() @ApiProperty() declare readonly createdAt: string;
 }
 ```
 
@@ -180,8 +180,7 @@ Query DTOs are the trust boundary protecting [04-repositories-and-persistence.md
 
 ```ts
 // api/dto/list-article-query.dto.ts
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@core/openapi';
 import {
   IsEnum,
   IsInt,
@@ -190,7 +189,8 @@ import {
   Max,
   MaxLength,
   Min,
-} from 'class-validator';
+  Type,
+} from '@core/validation';
 import {
   ArticleSortField,
   ArticleVisibility,
@@ -217,12 +217,12 @@ export class ListArticleQueryDto {
   @ApiPropertyOptional({ enum: ArticleSortField })
   @IsOptional()
   @IsEnum(ArticleSortField, { message: 'errors.article.sortBy.invalid' })
-  readonly sortBy: ArticleSortField = ArticleSortField.CREATED_AT;
+  readonly sortBy: ArticleSortField = ArticleSortField.CreatedAt;
 
   @ApiPropertyOptional({ enum: SortDirection })
   @IsOptional()
   @IsEnum(SortDirection)
-  readonly sortDirection: SortDirection = SortDirection.DESC;
+  readonly sortDirection: SortDirection = SortDirection.Desc;
 
   @ApiPropertyOptional({ enum: ArticleVisibility })
   @IsOptional()

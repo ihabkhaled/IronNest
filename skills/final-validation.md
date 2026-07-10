@@ -6,7 +6,7 @@ This is the gate you run **immediately before** asking to commit or push. It is 
 
 ## Rules this skill enforces
 
-- **Lint, typecheck, tests, coverage, build all green** — 0 errors AND 0 warnings; coverage ≥ 95% ([rules 1–2](../rules/00-non-negotiable-rules.md), [/testing/coverage-policy.md](../testing/coverage-policy.md)).
+- **Lint, typecheck, tests, coverage, build all green** — 0 errors/warnings; 95% statements/functions/lines, 90% measured branches, and every real changed branch covered.
 - **No behavior change without tests AND docs in the same change** ([rule 42](../rules/00-non-negotiable-rules.md)).
 - **Never bypass a hook with `--no-verify`** without a recorded, approved emergency exception ([/context/stack-and-toolchain.md](../context/stack-and-toolchain.md)).
 - **No secrets, env files, build/coverage output, or generated junk** committed — config via typed `@nestjs/config`, secrets via the secret manager ([rule 27](../rules/00-non-negotiable-rules.md), [/rules/17-configuration-and-environment.md](../rules/17-configuration-and-environment.md)).
@@ -84,7 +84,7 @@ These are the same commands the Husky hooks run (`pre-commit` = lint-staged + ty
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 
@@ -129,7 +129,7 @@ The subject must be intent-revealing — no `update`, `fix stuff`, `wip`, or `mi
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 

@@ -15,7 +15,7 @@
 - **@nestjs/config** — typed, validated configuration.
 - **@nestjs/swagger** — OpenAPI.
 - **@nestjs/throttler** — rate limiting.
-- **@nestjs/jwt + @nestjs/passport + passport-jwt** — auth building blocks.
+- **@nestjs/jwt + bcrypt** — auth vendors isolated behind app-owned token/password adapters; Passport is not installed.
 - **@nestjs/throttler** — rate limiting, owned by [`src/core/rate-limit`](../src/core/rate-limit).
 - **class-validator + class-transformer** — DTO validation (primary), owned by [`src/core/validation`](../src/core/validation); DTOs use its re-exports. Zod is supported via a custom pipe (see [`/rules/05-dto-and-validation.md`](../rules/05-dto-and-validation.md)).
 - **nestjs-pino + pino + pino-http** — structured logging for every request (redaction, 4xx→`warn` / 5xx→`error`), owned by [`src/core/logger`](../src/core/logger); everything else logs through `AppLogger`. `pino-pretty` for dev.
@@ -36,9 +36,9 @@
 
 ## Test toolchain
 
-- **Vitest 4** ([`vitest.config.mts`](../vitest.config.mts)) — runner. Coverage via **@vitest/coverage-istanbul**.
+- **Vitest 4** ([`vitest.config.mts`](../vitest.config.mts)) — runner. Coverage via the configured **V8 provider** (`@vitest/coverage-v8`).
 - **@nestjs/testing + supertest** — module-level unit tests and HTTP integration/e2e tests.
-- **Coverage gate:** statements / branches / functions / lines at the workspace floor (95%). Touched modules should aim higher (critical paths near 100%). See [`/testing/coverage-policy.md`](../testing/coverage-policy.md).
+- **Coverage gate:** statements/functions/lines at 95%; aggregate branches at the live 90% floor because decorator transforms inject synthetic branches. Touched real logic still targets at least 95% branches and critical paths near 100%. See [`/testing/coverage-policy.md`](../testing/coverage-policy.md).
 
 ## Commit & git-hook toolchain
 

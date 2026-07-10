@@ -7,7 +7,7 @@ Integration tests prove **multiple layers wired together**: controller → guard
 ## Rules this skill enforces
 
 - **Tests come first.** No behavior change ships without tests in the same change ([rule 42](../rules/00-non-negotiable-rules.md)).
-- **Coverage floor 95%** on statements/branches/functions/lines; critical paths near 100% ([/testing/coverage-policy.md](../testing/coverage-policy.md)).
+- **Coverage floor:** 95% statements/functions/lines, 90% measured branches for decorator artifacts, and every real touched branch covered ([/testing/coverage-policy.md](../testing/coverage-policy.md)).
 - **Verify persisted state, not just HTTP** — read the row back through the repository and assert it ([rule 19, 20](../rules/00-non-negotiable-rules.md)).
 - **Exercise the real auth chain** — auth guard + permissions guard + ownership/tenant check; identity from the token, never the body ([rules 33–35](../rules/00-non-negotiable-rules.md)).
 - **Every typed `AppError` path maps to a sanitized HTTP body** with its `messageKey` and status; no stack/SQL/secret leakage ([rule 26, 36](../rules/00-non-negotiable-rules.md), [/skills/create-error.md](./create-error.md)).
@@ -124,11 +124,11 @@ it('creates an order and persists it', async () => {
     .expect(201);
 
   const body = res.body as { id: string; status: string };
-  expect(body.status).toBe(OrderStatus.DRAFT); // enum member, not 'DRAFT'
+  expect(body.status).toBe(OrderStatus.Draft); // enum member, not 'draft'
 
   const row = await orders.findById(body.id); // verify against the DB, not just HTTP
   expect(row?.ownerId).toBe(userId); // identity came from the token
-  expect(row?.status).toBe(OrderStatus.DRAFT);
+  expect(row?.status).toBe(OrderStatus.Draft);
   expect(emailSpy.send).toHaveBeenCalledTimes(1); // side effect fired
 });
 ```
@@ -237,7 +237,7 @@ npx vitest run test/integration/order.integration-spec.ts
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 

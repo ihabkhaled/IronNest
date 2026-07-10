@@ -123,7 +123,7 @@ const [account, catalog] = await Promise.all([
 **Rationale.** Synchronous heavy work blocks the event loop and inflates p99 for every other request on the instance. Post-commit handlers **catch their own errors** so a side-effect failure never blocks or reverses the domain transition.
 
 ```ts
-@OnEvent(OrderEvent.PUBLISHED)
+@OnEvent(OrderEvent.Published)
 async onPublished(event: OrderPublishedEvent): Promise<void> {
   try {
     await this.notificationService.notifyAccountOfPublish(event.orderId);

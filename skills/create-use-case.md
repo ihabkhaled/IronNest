@@ -115,7 +115,7 @@ private async commitAward(order: Order, input: AcceptQuoteInput): Promise<AwardR
   return this.uow.runInTransaction(async (tx) => {
     const quote = await this.quoteRepo.markAccepted(input.quoteId, tx);
     await this.quoteRepo.rejectCompeting(order.id, input.quoteId, tx);
-    const awarded = await this.orderRepo.transition(order, OrderAction.AWARD, tx);
+    const awarded = await this.orderRepo.transition(order, OrderAction.Award, tx);
     await this.invitationRepo.resolve(order.id, tx);
     return { order: awarded, quote };
   });
@@ -132,8 +132,8 @@ The row must be durable before any handler reads it. Emit only after `runInTrans
 
 ```ts
 private publishAwardEvents(result: AwardResult): void {
-  this.events.emit(OrderEvent.AWARDED, toAwardedEvent(result.order));        // mapper in lib/
-  this.events.emit(OrderEvent.QUOTE_REJECTED, toRejectedEvent(result.quote));
+  this.events.emit(OrderEvent.Awarded, toAwardedEvent(result.order));        // mapper in lib/
+  this.events.emit(OrderEvent.QuoteRejected, toRejectedEvent(result.quote));
 }
 ```
 

@@ -37,7 +37,7 @@ export function buildOrder(overrides: Partial<Order> = {}): Order {
     id: 'order-0001',
     ownerId: 'user-0001',
     tenantId: 'tenant-a',
-    status: OrderStatus.DRAFT,
+    status: OrderStatus.Draft,
     total: 4200,
     currency: 'USD',
     createdAt: new Date('2025-01-01T00:00:00Z'),
@@ -50,7 +50,7 @@ export function buildOrder(overrides: Partial<Order> = {}): Order {
 ```ts
 // In a test — only the salient field is named; the rest is implied valid context
 const submitted = buildOrder({
-  status: OrderStatus.SUBMITTED,
+  status: OrderStatus.Submitted,
   ownerId: 'user-0002',
 });
 ```
@@ -143,13 +143,13 @@ For any entity with a lifecycle, provide a fixture per state so state-machine an
 
 ```ts
 export const buildDraftOrder = (o: Partial<Order> = {}) =>
-  buildOrder({ status: OrderStatus.DRAFT, ...o });
+  buildOrder({ status: OrderStatus.Draft, ...o });
 export const buildSubmittedOrder = (o: Partial<Order> = {}) =>
-  buildOrder({ status: OrderStatus.SUBMITTED, ...o });
+  buildOrder({ status: OrderStatus.Submitted, ...o });
 export const buildPaidOrder = (o: Partial<Order> = {}) =>
-  buildOrder({ status: OrderStatus.PAID, total: 4200, ...o });
+  buildOrder({ status: OrderStatus.Paid, total: 4200, ...o });
 export const buildArchivedOrder = (o: Partial<Order> = {}) =>
-  buildOrder({ status: OrderStatus.ARCHIVED, ...o });
+  buildOrder({ status: OrderStatus.Archived, ...o });
 ```
 
 Cover legal transitions, illegal transitions (domain rejects), terminal states, and the empty/zero case (`buildOrder({ lines: [] })`). Pair each with a domain-policy unit test ([/rules/03-application-services-and-use-cases.md](../rules/03-application-services-and-use-cases.md)).
@@ -233,7 +233,7 @@ Test data feeds the **doubles at a layer boundary**, never the unit under test.
 // DO — fixture drives the repository double; real service logic runs
 repo.findById.mockResolvedValue(buildPaidOrder({ ownerId: ACTORS.ownerA.id }));
 const result = await service.refund('order-0001', ACTORS.ownerA.id);
-expect(result.status).toBe(OrderStatus.REFUNDED);
+expect(result.status).toBe(OrderStatus.Refunded);
 ```
 
 Vendors/SDKs are always doubled behind their adapter — fixtures stand in for vendor responses; no test ever calls a real email provider, object storage, SMS gateway, payment provider, or cache ([/rules/12-library-wrapping-and-adapters.md](../rules/12-library-wrapping-and-adapters.md)).
@@ -317,7 +317,7 @@ Factories, fixtures, and seeds live under `test/` and are **excluded from the co
 npm run lint            # 0 errors AND 0 warnings (no `any`/`!` in factories or fixtures)
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest run — full suite, must pass in any order
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 

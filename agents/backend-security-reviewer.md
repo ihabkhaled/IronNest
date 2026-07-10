@@ -23,7 +23,7 @@ Stop security defects from merging: broken authentication, missing authorization
 4. [08-database-and-injection-safety.md](../rules/08-database-and-injection-safety.md) and [18-error-handling-and-exceptions.md](../rules/18-error-handling-and-exceptions.md) — injection + leakage canon.
 5. [14-observability-and-logging.md](../rules/14-observability-and-logging.md) and [17-configuration-and-environment.md](../rules/17-configuration-and-environment.md) — redaction + secret handling.
 6. The real primitives in scope — read before judging:
-   - Guards: `src/core/guards/` (auth guard, permissions/RBAC guard, ownership/tenant guard).
+   - Auth: `src/core/auth/` (identity/token port, auth guard, permissions guard, decorators); ownership/tenant policy remains application/domain/repository defense.
    - Permission catalog + roles: `@shared/constants` / `@shared/enums` (the source of truth for permission keys).
    - Exception filter + typed errors: `src/core/errors/`.
    - Config/secrets: `src/config/` (the only place — with `bootstrap/` — that may read `process.env`).
@@ -45,7 +45,7 @@ Stop security defects from merging: broken authentication, missing authorization
 
 ## Step list
 
-1. Scope to the diff. Run shared workflow steps (read the spec, open the real files in scope) and list security-relevant files first (`api/`, `core/guards/`, `infrastructure/`, `adapters/`, `config/`).
+1. Scope to the diff. Run shared workflow steps and list security-relevant files first (`api/`, `core/auth/`, `infrastructure/`, `adapters/`, `config/`).
 2. **Invoke the security skills.** Run [security-review.md](../skills/security-review.md) on the pending diff; for any query/string-built data access, also run [sql-injection-review.md](../skills/sql-injection-review.md) and hand SQLi depth to [database-reviewer.md](./database-reviewer.md).
 3. **Authentication.** Every protected route mounts the auth guard. No route silently skips it. Token expiry sane (short-lived access token; bounded refresh); refresh rotation revokes the prior session. Identity is read from the verified token via `@CurrentUser()`, never from the body.
 4. **Authorization.** Every route mounts the permissions guard with a permission that exists in the catalog. Cross-check the catalog — no invented permission strings, no magic literals (rules 8–9). Admin-only endpoints additionally require an admin permission.
@@ -70,7 +70,7 @@ findOne(@Param('id') id: string, @Query('tenantId') tenantId: string): Promise<I
 ```ts
 // DO — identity from the verified token; lookup scoped + ownership asserted in the application layer
 @Get(':id')
-@UseGuards(AuthGuard, PermissionsGuard)
+// JwtAuthGuard then PermissionsGuard are wired globally.
 @RequirePermissions(Permission.InvoiceRead) // catalog enum, not a magic string
 findOne(@CurrentUser() user: AuthUser, @Param('id', ParseUUIDPipe) id: string): Promise<InvoiceResponseDto> {
   return this.invoiceService.findForUser(user, id); // one delegation; thin transport

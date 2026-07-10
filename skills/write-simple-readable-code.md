@@ -1,8 +1,16 @@
 # Skill: Write Simple Readable Code
 
-> The default writing posture for **every** feature, bug fix, refactor, adapter, repository, DTO/API, and test change: run the **Simple Code Ladder**, reuse the existing owner, write the boring direct version, and never cut a safety guarantee to save lines. Implements [20-simple-readable-code.md](../rules/20-simple-readable-code.md) (rules **43**, **46**) and the canon in [/context/architecture-map.md](../context/architecture-map.md) and [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md).
+## Intent
 
-This skill wraps around whichever authoring skill you are running ([create-service.md](./create-service.md), [create-use-case.md](./create-use-case.md), [create-repository.md](./create-repository.md), …). If you are cleaning up code that already exists, switch to [simplify-existing-code.md](./simplify-existing-code.md) or [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md).
+Use the Simple Code Ladder to write the smallest direct, junior-readable, senior-trustworthy change without cutting a safety guarantee.
+
+## When to use
+
+Wrap every feature, bug fix, refactor, adapter, repository, DTO/API, and test authoring skill with this procedure.
+
+## When not to use
+
+For existing overbuilt code use [simplify-existing-code.md](./simplify-existing-code.md); for clever code use [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md); for a broad audit use [full-codebase-cleanup.md](./full-codebase-cleanup.md).
 
 ---
 
@@ -65,6 +73,14 @@ Dead branches, unused params, leftover config, speculative hooks, comments expla
 Update module docs, OpenAPI decorators, and the feature artifacts (rule 42). Then self-review against the nineteen questions of [24-team-readable-code-review.md](../rules/24-team-readable-code-review.md).
 
 ---
+
+## Checklist
+
+- [ ] Real code/tests read and existing owner searched.
+- [ ] Tests written first for changed behavior.
+- [ ] Direct version chosen; no speculative abstraction or clever type.
+- [ ] Validation/security/auth/authorization/ownership/tests/docs remain.
+- [ ] Declaration ownership and layer budgets pass review.
 
 ## Quality gates
 

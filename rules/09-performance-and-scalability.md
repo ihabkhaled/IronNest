@@ -181,7 +181,7 @@ Cache through a **cache adapter** ([12-library-wrapping-and-adapters.md](./12-li
 - Slow side effects (email/SMS dispatch, fan-out notifications, content scanning, report generation) run **after commit** via the event bus and integration adapters ([19-async-events-and-jobs.md](./19-async-events-and-jobs.md)). Handlers **catch their own errors** so a side-effect failure never blocks the domain transition (rule 38):
 
 ```ts
-@OnEvent(OrderEvent.PUBLISHED)
+@OnEvent(OrderEvent.Published)
 async onPublished(event: OrderPublishedEvent): Promise<void> {
   try {
     await this.notificationService.notifyAccountOfPublish(event.orderId);

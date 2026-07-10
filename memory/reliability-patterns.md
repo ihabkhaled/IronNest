@@ -141,7 +141,7 @@ export class OrderConfirmedNotificationHandler {
     private readonly logger: AppLogger,
   ) {}
 
-  @OnEvent(DomainEvent.ORDER_CONFIRMED)
+  @OnEvent(DomainEvent.OrderConfirmed)
   async handle(event: OrderConfirmedEvent): Promise<void> {
     try {
       await this.notifications.send(event.payload);
@@ -157,7 +157,7 @@ export class OrderConfirmedNotificationHandler {
 
 ```ts
 // Don't — unhandled rejection can fault the committed transaction's caller
-@OnEvent(DomainEvent.ORDER_CONFIRMED)
+@OnEvent(DomainEvent.OrderConfirmed)
 handle(event: OrderConfirmedEvent): void {
   void this.notifications.send(event.payload); // throw escapes, error is lost
 }

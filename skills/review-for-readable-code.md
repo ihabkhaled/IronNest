@@ -1,8 +1,16 @@
 # Skill: Review for Readable Code
 
-> Read every diff as the **next maintainer**, answer the **nineteen questions**, hunt the nine defect classes, and report **file-anchored** findings in **MUST FIX / SHOULD FIX / FOLLOW-UP** language — complexity gets **fixed, never explained away**, and a safety gap is **always MUST FIX**. Implements [24-team-readable-code-review.md](../rules/24-team-readable-code-review.md) (rule **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)) and feeds section 2a of [15-review-checklist.md](../rules/15-review-checklist.md).
+## Intent
 
-Run this before **any** PR, after an AI-generated change, after a refactor, before merging docs/`rules/` changes, and whenever a reviewer says "this is too much". This skill finds and reports; when you are the one fixing → [simplify-existing-code.md](./simplify-existing-code.md) or [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md); for auth/injection/leakage depth → [security-review.md](./security-review.md); for writing it readably in the first place → [write-simple-readable-code.md](./write-simple-readable-code.md).
+Read the diff as the next maintainer, answer the nineteen questions, and report file-anchored MUST FIX/SHOULD FIX/FOLLOW-UP findings.
+
+## When to use
+
+Run before every PR, after AI-generated/refactored code, before merging governance changes, or whenever a reviewer cannot scan the diff.
+
+## When not to use
+
+This skill reports. Use simplification/refactor/security skills to implement fixes; do not substitute a readability review for dedicated security or QA execution.
 
 ---
 
@@ -109,6 +117,14 @@ A finding list — every entry anchored `path:line` and classed:
 Close with a verdict: **merge-ready**, or blocked on the open MUST FIXes.
 
 ---
+
+## Checklist
+
+- [ ] Nineteen questions answered against real code/tests, not author explanation.
+- [ ] Declaration owners, clever types, duplicate helpers, and token cost reviewed.
+- [ ] Security/validation/auth/ownership/tests/docs gaps are MUST FIX.
+- [ ] Every finding has path, line, rule, severity, and fix direction.
+- [ ] Closed findings were re-read and gates rerun.
 
 ## Quality gates
 

@@ -31,7 +31,7 @@ These ride with the framework and are part of the standard surface:
 - **@nestjs/config** — typed, validated configuration. The only sanctioned config source. See [17-configuration-and-environment.md](../rules/17-configuration-and-environment.md).
 - **@nestjs/swagger** — OpenAPI document, generated in `bootstrap/`.
 - **@nestjs/throttler** — rate limiting.
-- **@nestjs/jwt + @nestjs/passport + passport-jwt** — auth building blocks behind the auth guard. See [07-security-authn-authz.md](../rules/07-security-authn-authz.md).
+- **@nestjs/jwt + bcrypt** — isolated behind the auth token/password ports and adapters. No Passport dependency is installed. See [07-security-authn-authz.md](../rules/07-security-authn-authz.md).
 - **class-validator + class-transformer** — **primary** DTO validation via a global `ValidationPipe` (`whitelist: true`, `transform: true`).
 - **reflect-metadata, rxjs, tslib** — framework runtime.
 
@@ -65,9 +65,9 @@ The architecture rules are what make "controllers stay thin", "services stay sho
 
 ## Test toolchain (locked)
 
-- **Vitest 4** ([vitest.config.mts](../vitest.config.mts)) — the runner. Coverage via **@vitest/coverage-istanbul**. Never write Jest / ts-jest.
+- **Vitest 4** ([vitest.config.mts](../vitest.config.mts)) — the runner. Coverage uses the configured **V8 provider** (`@vitest/coverage-v8`). Never write Jest / ts-jest.
 - **@nestjs/testing + supertest** — module-level unit tests and HTTP integration/e2e tests.
-- **Coverage floor: 95%** (statements / branches / functions / lines); touched modules aim higher, critical paths near 100%. Tests are written or adjusted **first**. See [11-testing-and-coverage.md](../rules/11-testing-and-coverage.md), [/testing/coverage-policy.md](../testing/coverage-policy.md), and [testing-strategy.md](./testing-strategy.md).
+- **Coverage floor:** 95% statements/functions/lines; 90% measured branches for decorator artifacts; every real touched branch covered. Tests are written or adjusted **first**. See [11-testing-and-coverage.md](../rules/11-testing-and-coverage.md), [/testing/coverage-policy.md](../testing/coverage-policy.md), and [testing-strategy.md](./testing-strategy.md).
 
 ## Commit & git-hook toolchain (locked)
 
@@ -99,7 +99,7 @@ CI and local hooks invoke **these same scripts** — no divergent shadow set of 
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # coverage thresholds met (95% floor)
+npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
 npm run build           # compiles clean
 ```
 

@@ -64,7 +64,7 @@ async function listArticles(userId: string) {
 
 // AFTER — type in model/, mapper in lib/ (enum compare), service stays orchestration-only
 // model/article.types.ts            → ArticleListItem
-// lib/article.mappers.ts            → toArticleListItem(article): ArticleListItem  (uses ArticleStatus.PUBLISHED)
+// lib/article.mappers.ts            → toArticleListItem(article): ArticleListItem  (uses ArticleStatus.Published)
 async listArticles(user: AuthUser): Promise<ArticleListItem[]> {
   const articles = await this.repo.findByAuthor(user.id);
   return articles.map(toArticleListItem); // same output for same input — structure clean

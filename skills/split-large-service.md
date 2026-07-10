@@ -1,8 +1,16 @@
 # Skill: Split a Large Service
 
-> Turn a god-service into **focused single-capability services** by routing every kind of bloat to its true owner, keeping the public surface **byte-stable** behind a thin facade, and **deleting any class left as a pure pass-through** — the existing suite must pass **unchanged**. Implements [23-function-service-file-size-discipline.md](../rules/23-function-service-file-size-discipline.md) §1–2 and the facade decomposition of [03-application-services-and-use-cases.md](../rules/03-application-services-and-use-cases.md) (rules **21**, **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
+## Intent
 
-Use when a `*.service.ts` owns multiple capabilities, a method trips the **20-line ESLint cap**, one class mixes validation + mapping + persistence + external calls, tests need huge setup, or changes cannot be isolated. This skill is the **service-specific decision layer** — it decides _what leaves the service and where it goes_. For the byte-stable facade mechanics (verbatim body moves, delegation shape, shared-helper handling) → defer to [decompose-large-file.md](./decompose-large-file.md). Oversized orchestration in a use case → [split-large-use-case.md](./split-large-use-case.md); a bloated repository → [split-large-repository.md](./split-large-repository.md).
+Turn a god service into focused capabilities by moving bloat to its true owner and preserving the public surface behind a justified facade.
+
+## When to use
+
+Use when one service owns multiple capabilities, trips the 20-line method cap, mixes layers, requires huge test setup, or cannot change in isolation.
+
+## When not to use
+
+Do not split one cohesive short capability by line count. Use [decompose-large-file.md](./decompose-large-file.md) for mechanical facade moves, or the use-case/repository/adapter split skill for another layer.
 
 ---
 
@@ -100,6 +108,14 @@ Services never call use cases — ESLint blocks the import. If the split exposes
 Run the full gate set below, then [final-validation.md](./final-validation.md). Update module docs in the same change — a split that consumers cannot navigate is unfinished.
 
 ---
+
+## Checklist
+
+- [ ] Characterization tests cover moved branches and safety behavior.
+- [ ] Decisions/mapping/persistence/vendor calls routed to correct owners.
+- [ ] Public methods/tokens remain stable or change explicitly with tests/docs.
+- [ ] Facade represents multiple capabilities; one-collaborator pass-through removed.
+- [ ] No duplicate helper, dependency inversion, or safety loss.
 
 ## Quality gates
 

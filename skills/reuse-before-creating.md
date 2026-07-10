@@ -1,8 +1,16 @@
 # Skill: Reuse Before Creating
 
-> Run the **owner search** before adding **any** new file, helper, constant, DTO, enum, error, adapter, service, use case, repository, or test fixture: **search → extend → refactor → create**, in that order, and **never ship a parallel duplicate**. Implements [22-reuse-before-creating.md](../rules/22-reuse-before-creating.md) (rule **45** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
+## Intent
 
-This skill is step 2 of the Simple Code Ladder and wraps every authoring skill ([create-service.md](./create-service.md), [create-use-case.md](./create-use-case.md), [create-repository.md](./create-repository.md)). It decides **where code lives**, not how it reads — for the writing posture use [write-simple-readable-code.md](./write-simple-readable-code.md); to clean an owner you already found, use [simplify-existing-code.md](./simplify-existing-code.md); to pull logic out of one, use [extract-helper-safely.md](./extract-helper-safely.md).
+Find and extend the single existing owner before adding any file, helper, constant, DTO, enum, error, adapter, service, repository, or fixture.
+
+## When to use
+
+Use before every creation or promotion decision; it is step 2 of the Simple Code Ladder.
+
+## When not to use
+
+Once the owner is known and needs cleanup, use [simplify-existing-code.md](./simplify-existing-code.md), [extract-helper-safely.md](./extract-helper-safely.md), or [refactor-inline-declarations.md](./refactor-inline-declarations.md).
 
 ---
 
@@ -33,7 +41,7 @@ rg --files -g "*.fixture.ts" -g "*builder*" src test
 
 ## Step 2 — Search `src/core`
 
-Cross-cutting infrastructure lives here — today: `logger`, `errors` (+ the global exception filter), `validation`, `openapi`, `clock`, `id-generator`, `health`, `rate-limit` ([22 §1](../rules/22-reuse-before-creating.md)). Guards, interceptors, and pipes live in `@core/*` once they are cross-cutting, and in the owning module until then (the reference app keeps its auth guards in `src/modules/auth`). If the concern is cross-cutting, its owner is in `@core/*` — never a module-local re-implementation.
+Cross-cutting infrastructure lives here — today: `auth`, `logger`, `errors` (+ the global exception filter), `validation`, `openapi`, `clock`, `id-generator`, `health`, `rate-limit` ([22 §1](../rules/22-reuse-before-creating.md)). Guards, interceptors, and pipes live in `@core/*` once cross-cutting; vendor implementations stay in the owning module's adapters. Never create a feature-local duplicate of a core concern.
 
 ## Step 3 — Search `src/shared`
 
@@ -95,6 +103,13 @@ export function toArticleResponse(article: Article): ArticleResponseDto {
 Only now create: **one** descriptively named file in the correct layer home (`model/`, `lib/`, `domain/`, `api/dto/`, `adapters/`, `@shared/*`, `@core/*`) — no `utils.ts` dumping ground ([23](../rules/23-function-service-file-size-discipline.md)). Export it through the right public surface, ship its tests and docs in the same change, and write it with [write-simple-readable-code.md](./write-simple-readable-code.md).
 
 ---
+
+## Checklist
+
+- [ ] Module, core, shared, sibling modules, tests, patterns, and pitfalls searched.
+- [ ] Existing/wrong owner extended or refactored; no parallel duplicate.
+- [ ] Tests/docs/public exports updated with the owner.
+- [ ] Safety logic remained centralized and intact.
 
 ## Quality gates
 

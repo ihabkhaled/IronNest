@@ -18,7 +18,7 @@ A green build is **not** proof of correctness. Walk every section and prove beha
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide (not just staged)
 npm run test            # vitest
-npm run test:coverage   # ≥95% statements/branches/functions/lines; critical paths ~100%
+npm run test:coverage   # ≥95% statements/functions/lines; configured branch floor + touched real branches reviewed
 npm run build           # nest build -p tsconfig.build.json
 ```
 
@@ -30,7 +30,7 @@ Never bypass a hook with `--no-verify`. A failed gate is reported with the **com
 
 - [ ] **MUST FIX** — no `any`; `unknown` + narrowing or a real type (rule 3).
 - [ ] **MUST FIX** — no `eslint-disable`, no `@ts-ignore`; `@ts-expect-error` only with a linked, justified decision (rules 4–6).
-- [ ] **MUST FIX** — no non-null assertion (`!`); use guards, `??`, `?.` (rule 7).
+- [ ] **MUST FIX** — no non-null or definite-assignment assertion (`!`); use guards, `??`, `?.`, constructors, or `declare readonly` DTO fields (rules 7, 47).
 - [ ] **MUST FIX** — `===` / `!==` only; never `==` / `!=`.
 - [ ] **SHOULD FIX** — explicit return types on every public method, provider, and exported function; no inferred-`any` leaks.
 - [ ] **SHOULD FIX** — `import type` / `export type` for type-only imports; no duplicate or self imports.
@@ -44,7 +44,7 @@ Never bypass a hook with `--no-verify`. A failed gate is reported with the **com
 - [ ] **MUST FIX** — services orchestrate a focused capability, ≤20 lines/method; no `Promise.all|allSettled|any|race` inside a service. Use cases own multi-entity/transactional work; use cases call services, never the reverse. See [03-application-services-and-use-cases.md](./03-application-services-and-use-cases.md).
 - [ ] **MUST FIX** — domain rules live in `domain/` (policies, invariants, state machines) — pure, not in controllers/services.
 - [ ] **MUST FIX** — no cross-module internal imports; consume another module via its `index.ts` or via events; `shared/` imports only `shared/` (rule 24).
-- [ ] **MUST FIX** — no inline `type`/`interface`/`enum`/`const`/DTO/config-map in controllers/services/repositories/use-cases/guards/interceptors/pipes/adapters (rules 10–16). See [06-types-enums-constants.md](./06-types-enums-constants.md).
+- [ ] **MUST FIX** — no inline `type`/`interface`/`enum`/`const`/DTO/config-map or anonymous request/result contract in controllers/services/repositories/use-cases/guards/interceptors/pipes/filters/adapters (rules 10–16, 47). See [30-declaration-ownership.md](./30-declaration-ownership.md).
 - [ ] **SHOULD FIX** — no god files; oversized files split by ownership (see [/skills/decompose-large-file.md](../skills/decompose-large-file.md)). Transformation/mapping/formatting extracted to `lib/`.
 - [ ] **SHOULD FIX** — path aliases (`@core/*`, `@modules/*`, …) used; no deep `../../../` relatives. No new circular dependencies.
 
@@ -53,6 +53,8 @@ Never bypass a hook with `--no-verify`. A failed gate is reported with the **com
 - [ ] **SHOULD FIX** — junior-readable and senior-trustworthy: the nineteen questions of [24](./24-team-readable-code-review.md) all answer yes; no clever TypeScript, nested chains, or dense one-liners ([20 §4](./20-simple-readable-code.md)).
 - [ ] **SHOULD FIX** — no speculative abstraction or unused DTO/config/env/helper shipped ([21](./21-yagni-and-minimalism.md)); existing owners reused, no parallel duplicates ([22](./22-reuse-before-creating.md)).
 - [ ] **MUST FIX** — no safety guarantee (validation, guards, ownership, `AppError`/`messageKey`, adapters, bounds, tests, docs) cut in the name of simplicity (rule 46).
+- [ ] **SHOULD FIX** — types pass the 30-second rule; helpers have a current owner; no token-burning boilerplate or duplicated policy ([25](./25-no-clever-typescript.md)–[27](./27-no-token-burning-code.md)).
+- [ ] **MUST FIX** — broad refactors are characterization-tested and responsibility-sliced with no half-migrated duplicate owner ([28](./28-codebase-refactor-discipline.md)).
 
 ```typescript
 // MUST FIX — logic in the controller
@@ -113,6 +115,7 @@ create(@Body() dto: CreateOrderDto, @CurrentUser() user: UserContext): Promise<O
 - [ ] **MUST FIX** — each new/changed `messageKey` has a translation in **every supported locale**; user-facing copy is never hardcoded in logic. See [/skills/add-i18n-message-key.md](../skills/add-i18n-message-key.md).
 - [ ] **SHOULD FIX** — all affected change artifacts updated: config templates/examples, deployment/CI definitions, migrations + rollback, seed/fixtures, permission catalog, dashboards/alerts, release notes, `claude.md`. See [/skills/add-migration-backfill.md](../skills/add-migration-backfill.md).
 - [ ] **FOLLOW-UP** — a new recurring mistake is recorded in [/memory/known-pitfalls.md](../memory/known-pitfalls.md) and mirrored into the compatibility files.
+- [ ] **MUST FIX** — agent entrypoints still point to canonical current owners; `claude.md` remains canonical, rules remain policy, skills remain procedures ([29](./29-agent-readiness-and-mirrors.md)).
 
 ---
 

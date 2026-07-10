@@ -1,8 +1,16 @@
 # Skill: Refactor Smart Code to Boring Code
 
-> Convert **impressive-but-exhausting** code — clever one-liners, nested ternaries, unreadable generics, magic chains — into boring, junior-readable code with **zero behavior change**: characterization tests pin behavior **first**, and the existing suite passes **unchanged** at the end. Implements [20-simple-readable-code.md](../rules/20-simple-readable-code.md) §3–4 (rule **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
+## Intent
 
-Use this skill when code is technically correct and passes every gate but reads like a showcase — often AI-written: dense `reduce`/optional-chain expressions, conditional-type tricks, one-use generic abstractions. When NOT this skill → writing new code: [write-simple-readable-code.md](./write-simple-readable-code.md); trimming code the task never needed: [remove-unnecessary-code.md](./remove-unnecessary-code.md); broad cleanup of untidy-but-plain code: [simplify-existing-code.md](./simplify-existing-code.md); a file over its size budget: [decompose-large-file.md](./decompose-large-file.md).
+Convert clever chains, ternaries, generics, and casts into named direct code with behavior pinned first.
+
+## When to use
+
+Use when technically correct code passes gates but requires repeated reading: dense transformations, optional-chain decisions, conditional types, or one-use generic abstractions.
+
+## When not to use
+
+Use the authoring, deletion, broad simplification, or large-file skill when cleverness is not the primary defect.
 
 ---
 
@@ -92,6 +100,14 @@ Comments that existed only to explain the trick die with the trick. Comments tha
 Run every gate. **No test file was edited to make the rewrite pass** — a test edit is a behavior change wearing a disguise. If a test fails, the rewrite diverged: fix the code, never the pin.
 
 ---
+
+## Checklist
+
+- [ ] Characterization tests cover every rewritten branch and error key.
+- [ ] Expressions have named steps and simple branches.
+- [ ] One-use generic/cast machinery removed; types pass the 30-second rule.
+- [ ] No safety check or public behavior changed.
+- [ ] Comments explaining tricks removed with the tricks.
 
 ## Quality gates
 

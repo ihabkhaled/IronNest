@@ -19,10 +19,10 @@ create(@Body() dto: CreateArticleDto): Promise<ArticleDto> {
 
 // Do — identity comes from the verified token
 @Post()
-@UseGuards(AuthGuard, PermissionsGuard, OwnershipGuard)
-@RequirePermission(Permission.ARTICLE_CREATE)
+// JwtAuthGuard then PermissionsGuard are wired globally.
+@RequirePermissions(Permission.ArticleCreate)
 create(
-  @CurrentUser() actor: AuthenticatedUser,
+  @CurrentUser() actor: AuthUserIdentity,
   @Body() dto: CreateArticleDto,
 ): Promise<ArticleDto> {
   return this.createArticleUseCase.execute(actor, dto);
@@ -71,21 +71,21 @@ export const PERMISSION_VALUES = Object.values(Permission);
 
 // @shared/constants/role-permissions.constant.ts — the role→permission map
 export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
-  [Role.VIEWER]: [Permission.ARTICLE_READ],
-  [Role.EDITOR]: [
-    Permission.ARTICLE_READ,
-    Permission.ARTICLE_CREATE,
-    Permission.ARTICLE_UPDATE,
+  [Role.Viewer]: [Permission.ArticleRead],
+  [Role.Editor]: [
+    Permission.ArticleRead,
+    Permission.ArticleCreate,
+    Permission.ArticleUpdate,
   ],
-  [Role.ADMIN]: PERMISSION_VALUES, // full surface
+  [Role.Admin]: PERMISSION_VALUES, // full surface
 } as const;
 ```
 
 ```ts
 // Do — declarative requirement on the route, enforced by a guard
 @Patch(':id')
-@UseGuards(AuthGuard, PermissionsGuard, OwnershipGuard)
-@RequirePermission(Permission.ARTICLE_UPDATE)
+// JwtAuthGuard then PermissionsGuard are wired globally.
+@RequirePermissions(Permission.ArticleUpdate)
 update(/* ... */): Promise<ArticleDto> { /* ... */ }
 ```
 
@@ -93,7 +93,7 @@ Conventions:
 
 - Enums/maps live in dedicated files (rules 8, 12, 16); no inline permission strings in controllers, services, or guards.
 - The full permission grant for the top admin role derives from the catalog (`PERMISSION_VALUES`) so new permissions are covered automatically — but high-blast-radius permissions (delete, export, impersonate, financial) are granted **explicitly**, never via a wildcard.
-- A `@RequirePermission` metadata decorator + a `PermissionsGuard` is the only sanctioned pattern. See [add-guard-and-permission.md](../skills/add-guard-and-permission.md).
+- A `@RequirePermissions` metadata decorator + `PermissionsGuard` is the sanctioned pattern. See [add-guard-and-permission.md](../skills/add-guard-and-permission.md).
 
 **Project records:** the concrete permission list, the role taxonomy, and the role→permission map.
 
@@ -107,7 +107,7 @@ Decision: every resource fetched by id is scoped to the actor in the application
 
 ```ts
 // Do — scope at the data boundary AND assert ownership
-async update(actor: AuthenticatedUser, id: string, dto: UpdateArticleDto): Promise<ArticleDto> {
+async update(actor: AuthUserIdentity, id: string, dto: UpdateArticleDto): Promise<ArticleDto> {
   const article = await this.repository.findByIdForTenant(id, actor.tenantId);
   if (article === null) throw new ArticleNotFoundError(id); // not-found, not forbidden — don't leak existence
   this.ownershipPolicy.assertCanModify(actor, article); // domain policy, pure
@@ -132,8 +132,8 @@ All secrets are typed config, validated at startup (rule 27, 29). **Never** read
 
 Decision: secret validation is stricter in production. The config schema:
 
-- requires every secret to be present and ≥ `32` chars;
-- in production only, **rejects placeholder/low-entropy values** (patterns like `change-me`, `secret`, `example`, `default`, repeated/sequential characters) and requires a minimum count of unique characters;
+- requires `NODE_ENV` plus every secret to be present and at least 32 UTF-8 bytes in every environment;
+- in production, requires generated-looking base64url material (at least 43 characters for 32 bytes), rejects placeholders/repeated/sequential patterns, and requires a minimum unique-character count;
 - **fails fast** — the app refuses to boot on an invalid secret rather than running insecurely.
 
 ```ts
@@ -165,6 +165,8 @@ Rationale: a weak or placeholder secret is a silent catastrophe; making it a **l
 These helpers belong in `@shared/utils` (e.g. a `crypto.util.ts`), reused everywhere — never re-implemented per module.
 
 **Project records:** the chosen KDF + work factor, and the one-time-code length/TTL/single-use policy.
+
+**IronNest reference implementation:** `bcrypt` is isolated in `src/modules/auth/adapters/password-hash.adapter.ts`; `@nestjs/jwt` is isolated in the JWT adapter plus module registration. The in-memory demo user's fixed cost-10 hash is test/bootstrap data only, not a production work-factor recommendation. Production adopters must set and benchmark their own stronger KDF policy.
 
 ---
 
@@ -242,8 +244,8 @@ Apply headers/CORS at the bootstrap layer (`bootstrap/`), the only place outside
 ## The security gate (every protected route)
 
 ```
-AuthGuard (verified token → principal)
-  → PermissionsGuard (@RequirePermission, central catalog)
+JwtAuthGuard (verified token → principal)
+  → PermissionsGuard (@RequirePermissions, central catalog)
     → OwnershipGuard / domain ownership policy (this actor, this resource)
       → application layer (re-scope queries to the actor; never trust client ids)
 ```

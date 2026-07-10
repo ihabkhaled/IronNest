@@ -219,7 +219,7 @@ Detail: [/skills/security-review.md](../skills/security-review.md), [/skills/sql
 
 ## 9. Coverage floor
 
-- **Workspace floor: 95%** statements / branches / functions / lines — enforced by `npm run test:coverage` (Husky `pre-push`).
+- **Workspace floor:** 95% statements/functions/lines, 90% measured branches for decorator artifacts, and every real touched branch covered — enforced by `npm run test:coverage` (Husky `pre-push`).
 - **Critical paths near 100%:** auth, RBAC, ownership/tenant scoping, money/state transitions, transactional use-cases.
 - Touched modules sit **above** the floor — never hide weak coverage on the changed file behind a high repo-wide average.
 - Declarative files (`*.types.ts`, `*.enums.ts`, `*.constants.ts`, barrel `index.ts`, `model/**`, migrations) are excluded from the denominator. Full policy: [/testing/coverage-policy.md](../testing/coverage-policy.md).

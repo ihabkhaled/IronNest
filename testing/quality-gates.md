@@ -61,7 +61,7 @@ npm run test:coverage   # vitest run --coverage (v8 provider)
 
 Coverage thresholds: statements/functions/lines at the **95%** workspace floor, branches at **90%** because decorator downlevel emit injects uncoverable synthetic branches. Touched modules aim higher, critical paths near 100%. A high global average never excuses a thin patch on changed code — measure the modules you touched. Full policy and waiver process: [/testing/coverage-policy.md](./coverage-policy.md).
 
-**Pass criteria:** all four metrics meet or exceed the threshold; the command exits 0 (Vitest fails the run when a threshold is missed).
+**Pass criteria:** each metric meets its configured threshold and the command exits 0; real changed branches are reviewed separately from synthetic decorator branches.
 
 ### Gate 5 — Build (`npm run build`)
 
@@ -162,7 +162,7 @@ A change is gate-approved only when all gates are green in a single, uninterrupt
 - [ ] `npm run lint` — 0 errors AND 0 warnings
 - [ ] `npm run typecheck` — 0 errors, project-wide
 - [ ] `npm run test` — all suites pass, 0 failures, 0 stray skips
-- [ ] `npm run test:coverage` — all four metrics ≥ 95% floor; touched modules higher
+- [ ] `npm run test:coverage` — statements/functions/lines ≥95%, measured branches ≥90%, all real changed branches covered
 - [ ] `npm run build` — compiles clean to `dist/`
 - [ ] Security review cleared for the change's risk (Gate 6)
 - [ ] Husky hooks ran (no `--no-verify`); CI required jobs green

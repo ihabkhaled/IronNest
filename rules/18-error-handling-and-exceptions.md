@@ -10,7 +10,7 @@
 
 ## The `AppError` hierarchy
 
-Defined once in `@core/errors/` (`app-error.ts`). Every subclass is a real domain concept with a fixed HTTP status and a `messageKey` of the form `errors.<feature>.<key>` (see [16-i18n-and-messaging.md](./16-i18n-and-messaging.md)). Never `throw new Error('...')` for a user-facing failure.
+Defined once in `@core/errors/` (`app-error.ts`). Every subclass is a real domain concept with a fixed HTTP status and a `messageKey` of the form `errors.<feature>.<key>` (see [16-i18n-and-messaging.md](./16-i18n-and-messaging.md)). Never `throw new Error('...')` or a bare framework exception for a known user-facing failure. Guards, targeted pipes, and adapters normalize expected failures to the same typed contract.
 
 | Class                  | HTTP | Throw when                                                                   |
 | ---------------------- | ---- | ---------------------------------------------------------------------------- |
@@ -55,7 +55,7 @@ export class StateTransitionError extends AppError {
 }
 ```
 
-`ErrorDetails`, `ErrorResponseBody`, and the `messageKey` catalog live in [06-types-enums-constants.md](./06-types-enums-constants.md) territory — `@core/errors/error.types.ts` and `@shared/constants`. No inline shapes (rules 10–16).
+`ErrorDetails`, `ErrorResponseBody`, and the `messageKey` catalog live in [06-types-enums-constants.md](./06-types-enums-constants.md) territory — `@core/errors/error.types.ts` and owning constants files. No inline/anonymous result shapes (rules 10–16, 47; [30-declaration-ownership.md](./30-declaration-ownership.md)).
 
 ---
 

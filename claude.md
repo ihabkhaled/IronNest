@@ -64,7 +64,7 @@ This repository may expose the same policy through multiple tool-facing files, b
 3. `.cursor/rules/*.mdc` are the Cursor-compatible project rules. They must remain aligned with `claude.md`.
 4. `.cursorrules` may exist only as a legacy compatibility shim for older Cursor setups and must not become the richer source of truth.
 5. `codex.md` and `cursor.md` are mirror/reference copies for humans or custom tooling. If they ever diverge from `claude.md`, `claude.md` wins.
-6. `KIMI.md`, `GEMINI.md`, `GLM.md`, `QWEN.md`, and `DEEPSEEK.md` are dedicated entrypoints for their respective AI agent families. They restate the canonical policy and architecture in a model-family-specific form. If they ever diverge from `claude.md`, `claude.md` wins.
+6. `KIMI.md`, `GEMINI.md`, `GLM.md`, `QWEN.md`, `DEEPSEEK.md`, and `MISTRAL.md` are compact dedicated entrypoints for their respective AI agent families. If they ever diverge from `claude.md`, `claude.md` wins. `codex.md` already fulfills the full GPT/Codex/Sol mirror role; no additional full GPT mirror is needed.
 7. When any permanent policy changes, update the canonical file first, then update compatibility and mirror files in the same delivery stream.
 
 ## NestJS Engineering Operating System (The Concrete "How")
@@ -98,7 +98,9 @@ Precedence within the engineering OS: [`context/architecture-map.md`](context/ar
 
 Before NestJS implementation: read this `claude.md`, then [`context/architecture-map.md`](context/architecture-map.md), [`rules/00-non-negotiable-rules.md`](rules/00-non-negotiable-rules.md), the layer rule(s) you are touching, and the matching skill — then write tests first and keep every gate green (`npm run lint` · `npm run typecheck` · `npm run test:coverage` · `npm run build`).
 
-Before writing code, run the IronNest Simple Code Ladder ([`rules/20-simple-readable-code.md`](rules/20-simple-readable-code.md), non-negotiable rules 43–46): need it → reuse existing → native/platform → existing adapter/dependency → small helper → direct readable code → new abstraction only when justified. Be lazy about code volume, never lazy about reading, validation, security, auth, permissions, ownership checks, tests, docs, observability, or architecture. Canonical detail: [`rules/20`](rules/20-simple-readable-code.md)–[`rules/24`](rules/24-team-readable-code-review.md), routed by [`context/simple-code-map.md`](context/simple-code-map.md).
+Before writing code, run the IronNest Simple Code Ladder ([`rules/20-simple-readable-code.md`](rules/20-simple-readable-code.md), non-negotiable rules 43–46): need it → reuse existing → native/platform → existing adapter/dependency → small helper → direct readable code → new abstraction only when justified. Be lazy about code volume, never lazy about reading, validation, security, auth, permissions, ownership checks, tests, docs, observability, or architecture.
+
+> **The best backend code is the code the next developer understands immediately.** Minimal code means minimum safe code. The complete readability/refactor/declaration/agent canon is [`rules/20`](rules/20-simple-readable-code.md)–[`rules/30`](rules/30-declaration-ownership.md), routed by [`context/simple-code-map.md`](context/simple-code-map.md), [`context/refactor-navigation.md`](context/refactor-navigation.md), and [`context/declaration-ownership-map.md`](context/declaration-ownership-map.md). Layer signatures do not hide anonymous contracts; DTOs use declarations rather than definite-assignment assertions; broad refactors are tests-first and responsibility-sliced.
 
 ## Standing Instruction To Claude Or Any AI Coding Agent
 
@@ -898,7 +900,7 @@ These rules are intentionally language-agnostic. Use the equivalent enforcement 
 
 The default rule is simple: reusable structure must not live inline in logic or presentation files.
 
-1. Do not define interfaces, types, enums, domain constants, request contracts, response contracts, schemas, policy maps, permission maps, event names, queue names, or large configuration objects inline inside presentation files, handlers, controllers, routes, services, use cases, managers, repositories, middleware, guards, filters, interceptors, or hooks.
+1. Do not define interfaces, types, enums, domain constants, request contracts, response contracts, schemas, policy maps, permission maps, event names, queue names, or configuration objects inline inside presentation files, handlers, controllers, routes, services, use cases, managers, repositories, adapters, middleware, guards, pipes, filters, interceptors, or hooks. Anonymous type literals in parameters, returns, and generics are inline contracts too.
 2. Move shared structure into dedicated files with clear ownership, such as:
    - `types` or `model` for types and interfaces
    - `enums` for domain enums
@@ -906,7 +908,7 @@ The default rule is simple: reusable structure must not live inline in logic or 
    - `contracts`, `dto`, or `schema` for request and response shapes
    - `utilities`, `helpers`, `formatters`, `builders`, `mappers`, `transformers`, or `policies` for named logic
 3. Do not leave repeated inline anonymous functions when a named function would make ownership and reuse clearer.
-4. Inline definitions are acceptable only for truly tiny file-private values used once and not representing a reusable concept. If a value, rule, or shape could be reused, documented, or tested independently, extract it.
+4. Inline definitions are acceptable only for truly tiny method-local values or one-use framework call options that carry no domain/security policy and are clearer at the call site. Implementation-layer module declarations and anonymous contracts are never covered by this exception. DTO fields use `declare`/constructor assignment, never definite-assignment `!`.
 5. In presentation files, the standard is stricter: no inline types, no inline enums, no inline schemas, no inline reusable constants, no inline business logic, and no inline helpers.
 
 ### Shared Library Encapsulation Rules
@@ -1623,7 +1625,7 @@ For meaningful changes, keep evidence appropriate to the risk:
 
 ### Coverage Rules
 
-- minimum touched-module coverage target: `95%` lines, branches, functions, and statements
+- minimum touched-module coverage target: `95%` lines, functions, statements, and real branches; the executable aggregate branch floor may remain `90%` only for documented decorator-transform synthetic branches, never for untested behavior
 - critical logic should be near-complete and scenario-rich
 - do not use high global averages to excuse weak coverage in changed code
 - a high percentage with shallow scenarios is still inadequate

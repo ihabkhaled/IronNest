@@ -1,8 +1,16 @@
 # Skill: Split a Large Repository
 
-> Break up a repository that has outgrown persistence: **move business decisions out** (to `domain/` or the service — never deeper in), **parameterize every query**, **allowlist every dynamic identifier**, **cap every list at 100**, then split what remains by persistence concern — public behavior byte-for-byte stable, proven by tests written first. Implements [23-function-service-file-size-discipline.md](../rules/23-function-service-file-size-discipline.md) (rule **46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)), [04-repositories-and-persistence.md](../rules/04-repositories-and-persistence.md) (persistence-only) and [08-database-and-injection-safety.md](../rules/08-database-and-injection-safety.md) (parameterized, bounded).
+## Intent
 
-Use when a repository holds business decisions, duplicates query building, sorts/filters on client strings with no allowlist, runs unbounded queries, or mixes multiple persistence concerns in one method. When NOT this skill: adding a fresh method to a healthy repo → [create-repository.md](./create-repository.md); the bloat lives in a service or use case → [split-large-service.md](./split-large-service.md) / [split-large-use-case.md](./split-large-use-case.md); you only need a query-safety audit, no restructuring → [sql-injection-review.md](./sql-injection-review.md).
+Restore persistence-only ownership, safe query construction, and bounded/scoped results before splitting by real persistence concern.
+
+## When to use
+
+Use for business logic in repositories, repeated query building, unsafe dynamic identifiers, unbounded/incorrectly scoped lists, or several persistence concerns.
+
+## When not to use
+
+Use [create-repository.md](./create-repository.md) for a healthy new method, another split skill for another layer, or [sql-injection-review.md](./sql-injection-review.md) for audit-only work.
 
 ---
 
@@ -110,6 +118,14 @@ If one repository (or one method) still mixes concerns — CRUD + search + repor
 If any query text moved or changed, run [sql-injection-review.md](./sql-injection-review.md) over the diff and add the malicious-payload tests it requires. Then rerun the Step 1 characterization suite — result shapes, bounds, and filters must be identical.
 
 ---
+
+## Checklist
+
+- [ ] Query behavior, bounds, scope, ordering, and result shape tested first.
+- [ ] Business/error/DTO logic moved upward to owners.
+- [ ] Values parameterized and identifiers allowlisted.
+- [ ] Owner/tenant scope applied before count/pagination.
+- [ ] Split follows a persistence seam and preserves contracts.
 
 ## Quality gates
 

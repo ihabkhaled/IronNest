@@ -4,7 +4,7 @@ This file is the Codex-compatible bootstrap for this repository.
 
 `claude.md` is the canonical long-form operating policy. Before doing analysis, planning, implementation, review, release work, or documentation work, read `claude.md` fully and follow it as binding company policy.
 
-If this file, `codex.md`, `cursor.md`, `KIMI.md`, `GEMINI.md`, `GLM.md`, `QWEN.md`, `DEEPSEEK.md`, `.cursor/rules/`, or `.cursorrules` ever differ from `claude.md`, `claude.md` wins unless another file is temporarily stricter for safety.
+If this file, a mirror, family router, Cursor rule, or legacy shim differs from `claude.md`, `claude.md` wins. A stricter safety rule may block work but does not override canonical policy.
 
 ## Repository Purpose
 
@@ -165,8 +165,9 @@ In addition to `claude.md` (canonical) and `AGENTS.md` (Codex bootstrap), the re
 - `GLM.md` — GLM-family agents (e.g., Zhipu ChatGLM).
 - `QWEN.md` — Qwen-family agents (e.g., Alibaba Qwen).
 - `DEEPSEEK.md` — DeepSeek-family agents (e.g., DeepSeek-V3 / DeepSeek-Coder).
+- `MISTRAL.md` — Mistral-family agents.
 
-Each entrypoint restates the canonical file precedence, the NestJS backend architecture, the zero-inline-declaration rule, layer responsibilities, security/performance/readability expectations, testing gates, and what the agent must never do. If an entrypoint contradicts `claude.md`, `claude.md` wins.
+Each family entrypoint is a compact router: canonical precedence, the Simple Code Ladder/safety boundary, and links to the owning rules, skills, context, and pitfalls. It must not duplicate the policy body. If an entrypoint contradicts `claude.md`, `claude.md` wins.
 
 ## NestJS Engineering Operating System
 
@@ -183,7 +184,9 @@ Canonical architecture (one-way layered deps): Controller (`api/*.controller.ts`
 
 Before NestJS implementation read: `claude.md` → `context/architecture-map.md` → `rules/00-non-negotiable-rules.md` → the layer rule(s) and the matching skill. Then write tests first and keep every gate green: `npm run lint`, `npm run typecheck`, `npm run test:coverage`, `npm run build`. If engineering guidance ever conflicts with `claude.md`, `claude.md` wins; when two rules overlap, the stricter one applies.
 
-Before writing code, run the IronNest Simple Code Ladder (`rules/20-simple-readable-code.md`, non-negotiable rules 43–46): need it → reuse existing → native/platform → existing adapter/dependency → small helper → direct readable code → new abstraction only when justified. Be lazy about code volume, never lazy about reading, validation, security, auth, permissions, ownership checks, tests, docs, observability, or architecture. Canonical detail: `rules/20`–`rules/24`.
+Before writing code, run the IronNest Simple Code Ladder (`rules/20-simple-readable-code.md`, non-negotiable rules 43–46): need it → reuse existing → native/platform → existing adapter/dependency → small helper → direct readable code → new abstraction only when justified. Be lazy about code volume, never lazy about reading, validation, security, auth, permissions, ownership checks, tests, docs, observability, or architecture.
+
+The complete readability/refactor/declaration/agent canon is `rules/20`–`rules/30`. Also read `rules/28-codebase-refactor-discipline.md`, `rules/30-declaration-ownership.md`, `skills/full-codebase-cleanup.md`, `context/refactor-navigation.md`, `context/declaration-ownership-map.md`, and `memory/known-pitfalls.md`. `codex.md` already fulfills the full GPT/Codex/Sol mirror role.
 
 ## Final Instruction
 

@@ -8,9 +8,9 @@ A controller does four things and nothing more: declare the route + OpenAPI shap
 
 ## Controllers MAY
 
-- Declare routing + OpenAPI metadata: `@Controller`, `@Get`/`@Post`/`@Patch`/`@Put`/`@Delete`, `@HttpCode`, `@ApiTags`/`@ApiOperation`/`@ApiResponse`.
+- Declare routing + OpenAPI metadata using route constants owned by the module: `@Controller`, `@Get`/`@Post`/`@Patch`/`@Put`/`@Delete`, `@HttpCode`, `@ApiTags`/`@ApiOperation`/`@ApiResponse`.
 - Bind input through parameter decorators: `@Body`, `@Param`, `@Query`, plus app decorators `@CurrentUser()` and `@RequirePermissions()`.
-- Attach guards (`@UseGuards`), pipes (DTO validation runs via the global `ValidationPipe`; targeted pipes like `ParseUUIDPipe` are allowed), and interceptors (`@UseInterceptors`).
+- Attach guards (`@UseGuards`), pipes (DTO validation runs via the global `ValidationPipe`; targeted pipes must map failures to the typed error contract), and interceptors (`@UseInterceptors`).
 - Delegate to **exactly one** application method (a service or a use case) and `return` its result.
 - Carry a `private readonly` injected service/use case via constructor DI.
 
@@ -19,12 +19,13 @@ A controller does four things and nothing more: declare the route + OpenAPI shap
 - Contain business rules, branching on domain state, multi-step orchestration, transformation, or persistence — push it down to a service/use case ([03-application-services-and-use-cases.md](./03-application-services-and-use-cases.md)).
 - Call more than one application method to fulfill a request — compose in the application layer, not here.
 - Import repositories, infrastructure, ORM clients, or vendor SDKs (`architecture/no-restricted-layer-imports`).
-- Define inline types/interfaces/enums/constants/DTOs/response shapes (rules 10–16; `no-restricted-syntax`).
+- Define inline types/interfaces/enums/constants/DTOs/request or response shapes/config maps (rules 10–16 and 47; `architecture/no-inline-layer-declarations`). This includes anonymous type literals inside a parameter, return type, or generic.
 - Compare domain strings — use enum members from `@shared/enums` ([06-types-enums-constants.md](./06-types-enums-constants.md), rule 9).
 - Read `process.env` (rule 27) or use `console.*` (rule 28).
 - Wrap bodies in `try/catch` to build error responses — throw typed `AppError`s and let the global exception filter format them ([18-error-handling-and-exceptions.md](./18-error-handling-and-exceptions.md)).
 - Read identity from the request body — identity comes from the verified token via `@CurrentUser()` (rule 33).
 - Shape responses inline — use a `lib/` mapper or a response interceptor (see [Response shaping](#response-shaping)).
+- Hardcode domain route names or permission metadata at the call site; import them from the owning constants/enums ([30-declaration-ownership.md](./30-declaration-ownership.md)).
 
 ---
 
@@ -32,14 +33,14 @@ A controller does four things and nothing more: declare the route + OpenAPI shap
 
 NestJS runs the chain below; a controller method is the last step. Guards run **before** validation, so an unauthorized caller never reaches your DTO. Identity, then authorization, then ownership, then validation, then the handler.
 
-| Stage                | Mechanism                                           | Why this order                                                                   |
-| -------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------- |
-| 1 Authentication     | auth guard (`@UseGuards(AuthGuard)`)                | Establishes the verified principal. Nothing trusts the client until this passes. |
-| 2 Authorization      | permissions/RBAC guard (`@RequirePermissions(...)`) | Checks the principal against a central permission catalog. Authn ≠ authz.        |
-| 3 Ownership / tenant | ownership guard or an application-layer check       | Blocks IDOR / cross-tenant access on resources fetched by id.                    |
-| 4 Validation         | global `ValidationPipe` (`whitelist`, `transform`)  | DTO validation runs only after the caller is known to be allowed.                |
-| 5 Handler            | controller method                                   | One delegation → one application call → return.                                  |
-| 6 Response / errors  | response interceptor; global exception filter       | Shapes the success envelope; maps thrown `AppError` → safe `{ messageKey }`.     |
+| Stage                | Mechanism                                            | Why this order                                                                   |
+| -------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 1 Authentication     | globally wired `JwtAuthGuard` (`@Public()` opts out) | Establishes the verified principal. Nothing trusts the client until this passes. |
+| 2 Authorization      | permissions/RBAC guard (`@RequirePermissions(...)`)  | Checks the principal against a central permission catalog. Authn ≠ authz.        |
+| 3 Ownership / tenant | ownership guard or an application-layer check        | Blocks IDOR / cross-tenant access on resources fetched by id.                    |
+| 4 Validation         | global `ValidationPipe` (`whitelist`, `transform`)   | DTO validation runs only after the caller is known to be allowed.                |
+| 5 Handler            | controller method                                    | One delegation → one application call → return.                                  |
+| 6 Response / errors  | response interceptor; global exception filter        | Shapes the success envelope; maps thrown `AppError` → safe `{ messageKey }`.     |
 
 Mount the always-on guards globally (auth + RBAC in [07-security-authn-authz.md](./07-security-authn-authz.md)); annotate truly open routes with a `@Public()` decorator rather than removing the guard. Internal service-to-service endpoints use a separate route prefix and their own credential — never just "no guard".
 
@@ -66,9 +67,11 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
 } from '@nestjs/swagger';
-import { CurrentUser } from '@core/decorators/current-user.decorator';
-import { RequirePermissions } from '@core/decorators/require-permissions.decorator';
-import { AuthUser } from '@shared/types/auth-user.type';
+import {
+  type AuthUserIdentity,
+  CurrentUser,
+  RequirePermissions,
+} from '@core/auth';
 import { Permission } from '@shared/enums/permission.enum';
 import { ArticleService } from '@modules/article/application/article.service';
 import { CreateArticleDto } from '@modules/article/api/dto/create-article.dto';
@@ -82,42 +85,42 @@ export class ArticleController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @RequirePermissions(Permission.ARTICLE_CREATE)
+  @RequirePermissions(Permission.ArticleCreate)
   @ApiOperation({ summary: 'Create an article' })
   @ApiCreatedResponse({ type: ArticleResponseDto })
   create(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUserIdentity,
     @Body() dto: CreateArticleDto,
   ): Promise<ArticleResponseDto> {
     return this.articleService.create(user.id, dto); // one delegation, identity from the token
   }
 
   @Get(':id')
-  @RequirePermissions(Permission.ARTICLE_READ)
+  @RequirePermissions(Permission.ArticleRead)
   @ApiOperation({ summary: 'Get an article by id' })
   @ApiOkResponse({ type: ArticleResponseDto })
   getById(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUserIdentity,
     @Param('id') id: string,
   ): Promise<ArticleResponseDto> {
     return this.articleService.getById(user.id, id);
   }
 
   @Get()
-  @RequirePermissions(Permission.ARTICLE_READ)
+  @RequirePermissions(Permission.ArticleRead)
   @ApiOperation({ summary: 'List articles' })
   list(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUserIdentity,
     @Query() query: ListArticleQueryDto,
   ): Promise<PaginatedResult<ArticleResponseDto>> {
     return this.articleService.list(user.id, query); // pagination caps live in the DTO + repository
   }
 
   @Patch(':id')
-  @RequirePermissions(Permission.ARTICLE_UPDATE)
+  @RequirePermissions(Permission.ArticleUpdate)
   @ApiOperation({ summary: 'Update an article' })
   update(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUserIdentity,
     @Param('id') id: string,
     @Body() dto: UpdateArticleDto,
   ): Promise<ArticleResponseDto> {
@@ -126,10 +129,10 @@ export class ArticleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @RequirePermissions(Permission.ARTICLE_DELETE)
+  @RequirePermissions(Permission.ArticleDelete)
   @ApiOperation({ summary: 'Delete an article' })
   delete(
-    @CurrentUser() user: AuthUser,
+    @CurrentUser() user: AuthUserIdentity,
     @Param('id') id: string,
   ): Promise<void> {
     return this.articleService.delete(user.id, id);
@@ -137,7 +140,7 @@ export class ArticleController {
 }
 ```
 
-> `PaginatedResult<T>`, `AuthUser`, and `Permission` are imported types/enums — never declared inline. Each method body is a single `return` of one application call. The controller never sees the ORM, the repository, or a vendor SDK.
+> `PaginatedResult<T>`, `AuthUserIdentity`, and `Permission` are imported types/enums — never declared inline. Each method body is a single `return` of one application call. The controller never sees the ORM, the repository, or a vendor SDK.
 
 ---
 
@@ -166,8 +169,8 @@ detail(@Param('id') id: string): Promise<unknown> {
 
 // Do — one orchestration call; the use case composes article + comments
 @Get(':id/detail')
-@RequirePermissions(Permission.ARTICLE_READ)
-detail(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleDetailDto> {
+@RequirePermissions(Permission.ArticleRead)
+detail(@CurrentUser() user: AuthUserIdentity, @Param('id') id: string): Promise<ArticleDetailDto> {
   return this.getArticleDetailUseCase.execute(user.id, id);
 }
 ```
@@ -223,7 +226,7 @@ getById(@Param('id') id: string) {
 }
 
 // Do — service returns a response DTO (mapped in lib/), interceptor wraps the envelope
-getById(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleResponseDto> {
+getById(@CurrentUser() user: AuthUserIdentity, @Param('id') id: string): Promise<ArticleResponseDto> {
   return this.articleService.getById(user.id, id);
 }
 ```
@@ -249,7 +252,7 @@ getById(@Param('id') id: string) {
 }
 
 // Do — let it throw; the filter formats the safe body
-getById(@CurrentUser() user: AuthUser, @Param('id') id: string): Promise<ArticleResponseDto> {
+getById(@CurrentUser() user: AuthUserIdentity, @Param('id') id: string): Promise<ArticleResponseDto> {
   return this.articleService.getById(user.id, id); // service throws NotFoundAppError('errors.article.notFound')
 }
 ```
@@ -294,7 +297,7 @@ const payload: { state: string } = { state: 'published' };
 console.log('created', dto);
 
 // Do — typed DI, enum value, one delegation, identity from the token
-create(@CurrentUser() user: AuthUser, @Body() dto: CreateArticleDto): Promise<ArticleResponseDto> {
+create(@CurrentUser() user: AuthUserIdentity, @Body() dto: CreateArticleDto): Promise<ArticleResponseDto> {
   return this.articleService.create(user.id, dto);
 }
 ```

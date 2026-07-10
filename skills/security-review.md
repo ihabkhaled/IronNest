@@ -23,7 +23,7 @@ Review only what changed; list the security-relevant files first.
 
 ```bash
 git diff --stat origin/main...HEAD
-git diff origin/main...HEAD -- 'src/modules/**/api/**' 'src/core/guards/**' 'src/modules/**/infrastructure/**' 'src/**/adapters/**'
+git diff origin/main...HEAD -- 'src/modules/**/api/**' 'src/core/auth/**' 'src/modules/**/infrastructure/**' 'src/**/adapters/**'
 ```
 
 Then use the **Grep tool** (not raw `rg` — results link in the UI) to find risk patterns:
@@ -42,7 +42,7 @@ Every protected route chains, in order: **auth guard → permissions guard → o
 ```ts
 // DO — full guard chain, central permission catalog, DTO validation, thin delegation
 @Post()
-@UseGuards(AuthGuard, PermissionsGuard)
+// JwtAuthGuard then PermissionsGuard are wired globally.
 @RequirePermissions(Permission.OrderCreate) // from @shared/constants permission catalog
 create(@CurrentUser() user: AuthUser, @Body() dto: CreateOrderDto): Promise<OrderResponseDto> {
   return this.createOrder.execute(user, dto); // identity from the token, not the body

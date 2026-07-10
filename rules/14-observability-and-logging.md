@@ -35,6 +35,8 @@ this.logger.info(`order ${JSON.stringify(order)} published`); // never stringify
 3. **Inject the logger** via constructor DI (`private readonly logger: AppLogger`). The only permitted file-local literal is a `LOG_PREFIX`/context label; every other constant lives in `*.constants.ts` (rule 13).
 4. **Never log whole entities, raw bodies, or `unknown`.** Log identifiers (`orderId`, `userId`), not payloads. Narrow `catch` first (see §5).
 5. **Level comes from typed config** (`logging.level`), read via `@nestjs/config` — never `process.env.LOG_LEVEL` directly (rule 27, [17-configuration-and-environment.md](./17-configuration-and-environment.md)).
+6. **Milestones, not narration.** Refactoring a method into helpers does not create one log per helper. Keep one structured event for a material success/failure/security milestone so extraction does not multiply noise ([27-no-token-burning-code.md](./27-no-token-burning-code.md)).
+7. Log event names, redaction paths, and metadata contracts have one constants/types owner; never duplicate them inside services, guards, adapters, or filters ([30-declaration-ownership.md](./30-declaration-ownership.md)).
 
 ---
 

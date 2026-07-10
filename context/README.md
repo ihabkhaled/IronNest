@@ -10,14 +10,19 @@ This workspace is **stack- and domain-agnostic**: the layering, boundaries, and 
 
 ## The files in this folder
 
-| File                                               | What it is                                                                                                                                                                                                                  | Read it when                                      |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| [architecture-map.md](./architecture-map.md)       | **The single source of truth.** Layers and the one-way dependency rule, the canonical source tree, module anatomy, NestJS building-block placement, cross-cutting contracts, ESLint enforcement, and the request lifecycle. | Always. Before any structural decision.           |
-| [stack-and-toolchain.md](./stack-and-toolchain.md) | The exact runtime, framework, lint/format, test, and git-hook toolchain, plus every npm script and the quality-gate command block. The business stack (ORM/DB/cache/broker) is left to the project.                         | Setting up, choosing a command, or wiring a tool. |
-| [codebase-navigation.md](./codebase-navigation.md) | A "where do I put / find X" guide: directory walk-through, common-task → file-list cheatsheets (add an endpoint, add an event, add a config value, add a migration), and how to trace a request end to end.                 | Locating code or scaffolding a change.            |
-| [reference-patterns.md](./reference-patterns.md)   | Copy-ready, genericized snippets for each layer — controller, use case, service, repository, DTO, typed `AppError`, guard chain, adapter, event handler — matching the architecture map exactly.                            | You want the canonical shape to copy from.        |
-| [glossary.md](./glossary.md)                       | Precise definitions of the vocabulary used everywhere: layer names, _service vs. use case_, `messageKey`, adapter, guard chain, ownership/tenant check, bounded query, quality gate.                                        | A term is ambiguous or you want shared language.  |
-| [simple-code-map.md](./simple-code-map.md)         | The simplicity router for [rules 20–24](../rules/README.md): where helpers/constants/decisions/shapes belong, when to extract, when **not** to create a new file, and which simplicity skill fits the situation.            | Running the Simple Code Ladder on any change.     |
+| File                                                           | What it is                                                                                                                                                                                                                  | Read it when                                      |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [architecture-map.md](./architecture-map.md)                   | **The single source of truth.** Layers and the one-way dependency rule, the canonical source tree, module anatomy, NestJS building-block placement, cross-cutting contracts, ESLint enforcement, and the request lifecycle. | Always. Before any structural decision.           |
+| [stack-and-toolchain.md](./stack-and-toolchain.md)             | The exact runtime, framework, lint/format, test, and git-hook toolchain, plus every npm script and the quality-gate command block. The business stack (ORM/DB/cache/broker) is left to the project.                         | Setting up, choosing a command, or wiring a tool. |
+| [codebase-navigation.md](./codebase-navigation.md)             | A "where do I put / find X" guide: directory walk-through, common-task → file-list cheatsheets (add an endpoint, add an event, add a config value, add a migration), and how to trace a request end to end.                 | Locating code or scaffolding a change.            |
+| [reference-patterns.md](./reference-patterns.md)               | Copy-ready, genericized snippets for each layer — controller, use case, service, repository, DTO, typed `AppError`, guard chain, adapter, event handler — matching the architecture map exactly.                            | You want the canonical shape to copy from.        |
+| [glossary.md](./glossary.md)                                   | Precise definitions of the vocabulary used everywhere: layer names, _service vs. use case_, `messageKey`, adapter, guard chain, ownership/tenant check, bounded query, quality gate.                                        | A term is ambiguous or you want shared language.  |
+| [simple-code-map.md](./simple-code-map.md)                     | The simplicity router for [rules 20–30](../rules/README.md): where helpers/constants/decisions/shapes belong, when to extract, when **not** to create a new file, and which simplicity skill fits the situation.            | Running the Simple Code Ladder on any change.     |
+| [declaration-ownership-map.md](./declaration-ownership-map.md) | Exact homes for constants, types, interfaces, enums, DTOs, helpers, policies, adapters, config, fixtures, and exports.                                                                                                      | Moving or adding a declaration.                   |
+| [refactor-navigation.md](./refactor-navigation.md)             | Finding the focused cleanup skill and the responsibility-sliced execution order.                                                                                                                                            | Refactoring existing code.                        |
+| [agent-readiness-map.md](./agent-readiness-map.md)             | Agent load order, entrypoint roles, and synchronization set.                                                                                                                                                                | Updating policy or agent mirrors.                 |
+| [security-clean-code-map.md](./security-clean-code-map.md)     | Owners and fixed order for auth, permissions, ownership, vendors, errors, and tests.                                                                                                                                        | Refactoring security-sensitive code.              |
+| [validation-clean-code-map.md](./validation-clean-code-map.md) | Owners for HTTP/config/provider validation and safe error behavior.                                                                                                                                                         | Refactoring DTOs, pipes, validators, or config.   |
 
 ---
 
@@ -30,9 +35,10 @@ For a human engineer **or** an AI agent picking up this workspace, read top to b
 3. **[stack-and-toolchain.md](./stack-and-toolchain.md)** — what runs the code and how to validate it. Memorize the quality-gate block.
 4. **[glossary.md](./glossary.md)** — so the words mean the same thing to you as to the reviewers.
 5. **[codebase-navigation.md](./codebase-navigation.md)** — how to find and place code in an actual tree.
-6. **[reference-patterns.md](./reference-patterns.md)** — the canonical snippets to copy when you start writing.
-7. **The relevant [/rules](../rules/README.md) file(s)** for the layer you are touching (e.g. [02-controllers-and-http-transport.md](../rules/02-controllers-and-http-transport.md), [03-application-services-and-use-cases.md](../rules/03-application-services-and-use-cases.md), [04-repositories-and-persistence.md](../rules/04-repositories-and-persistence.md), [07-security-authn-authz.md](../rules/07-security-authn-authz.md)).
-8. **The matching [/skills](../skills/README.md) recipe** for the task (e.g. [create-module.md](../skills/create-module.md), [create-service.md](../skills/create-service.md), [create-repository.md](../skills/create-repository.md), [write-unit-tests.md](../skills/write-unit-tests.md)).
+6. **[declaration-ownership-map.md](./declaration-ownership-map.md)** and the matching security/validation/refactor map.
+7. **[reference-patterns.md](./reference-patterns.md)** — the canonical snippets to copy when you start writing.
+8. **The relevant [/rules](../rules/README.md) file(s)** for the layer you are touching.
+9. **The matching [/skills](../skills/README.md) recipe** for the task.
 
 > **AI agents:** treat steps 1–4 as required priming for every session, then jump to the rule + skill for the specific task. The fast-start map in [/memory/ai-context-map.md](../memory/ai-context-map.md) routes any request to its rule, skill, and reviewer.
 
@@ -51,7 +57,7 @@ Keep the boundaries straight — each folder has one job.
 | `/memory`  | **Decisions** — durable conventions and the rationale behind them. | [/memory/README.md](../memory/README.md)   |
 | `/testing` | **Quality** — the testing standards, coverage policy, and gates.   | [/testing/README.md](../testing/README.md) |
 
-The relationship is one-way: **context describes the constants**, rules **enforce** them, skills **apply** them, agents **verify** them, memory **records why** they were chosen. When any of these conflict, [architecture-map.md](./architecture-map.md) and [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) win.
+The relationship is one-way: **context describes the constants**, rules **enforce** them, skills **apply** them, agents **verify** them, memory **records why** they were chosen. `claude.md` wins globally; within subordinate engineering guidance, [architecture-map.md](./architecture-map.md) and [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) win.
 
 ---
 
@@ -92,7 +98,7 @@ A fast self-check that ties context to the gates you will actually face:
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest
-npm run test:coverage   # coverage thresholds met (95% floor)
+npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
 npm run build           # compiles clean
 ```
 

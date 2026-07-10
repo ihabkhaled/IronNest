@@ -63,7 +63,7 @@ Recipes: [/skills/write-unit-tests.md](../skills/write-unit-tests.md), [/skills/
 
 ## Decision 3 — Coverage is a per-touched-module floor, not a vanity average
 
-**Decision.** The workspace coverage floor is **95%** across statements, branches, functions, and lines, enforced by `npm run test:coverage` on Husky `pre-push`. Critical paths run **near 100%**.
+**Decision.** The workspace floor is **95%** statements/functions/lines and **90% measured branches** for decorator artifacts, enforced by `npm run test:coverage` on Husky `pre-push`. Every real touched branch and critical path targets near 100%.
 
 **Rationale.**
 
@@ -73,7 +73,7 @@ Recipes: [/skills/write-unit-tests.md](../skills/write-unit-tests.md), [/skills/
 
 **Excluded from the denominator** (declarative, no logic): `*.types.ts`, `*.enums.ts`, `*.constants.ts`, barrel `index.ts`, `model/**`, `@shared/{enums,constants,types}/**`, and migrations. This is _why_ the zero-inline-declaration rules ([/rules/06-types-enums-constants.md](../rules/06-types-enums-constants.md)) double as coverage strategy: keeping types/enums/constants in their own files removes non-logic from the denominator, so the real logic in `*.service.ts`, `*.use-case.ts`, `domain/`, and `lib/` clears the bar honestly.
 
-A genuinely unreachable defensive branch (a fall-through an earlier guard already prevents) may use a justified `/* istanbul ignore next */` with a comment explaining _why_. Rare exception, never a number-hitting tool.
+A genuinely unreachable defensive branch may use a justified V8 ignore directive with a comment explaining _why_. This is a rare approved exception, never a number-hitting tool.
 
 > **Project records:** any per-file threshold overrides, additional exclusion globs, and the location of the coverage report. Full policy: [/testing/coverage-policy.md](../testing/coverage-policy.md).
 
@@ -140,7 +140,7 @@ Security tests are mandatory on protected routes, preferably as integration so t
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest run — full suite
-npm run test:coverage   # vitest run --coverage — enforces the 95% floor
+npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
 npm run build           # compiles clean
 ```
 

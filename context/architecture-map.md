@@ -1,6 +1,6 @@
 # Architecture Map — The Canonical NestJS Layered Architecture
 
-> This is the **single source of truth** for how a backend in this workspace is structured. Every rule in [`/rules`](../rules/README.md), every skill in [`/skills`](../skills/README.md), every reviewer in [`/agents`](../agents/README.md), and the ESLint architecture plugin in [`/eslint`](../eslint/architecture.config.mjs) agree with this document. If anything contradicts it, this file and [`/rules/00-non-negotiable-rules.md`](../rules/00-non-negotiable-rules.md) win.
+> This is the **single source of truth for subordinate NestJS structure**. Every rule, skill, reviewer, and ESLint architecture check agrees with it. `claude.md` remains the global canonical policy; within engineering guidance, this file and [`/rules/00-non-negotiable-rules.md`](../rules/00-non-negotiable-rules.md) win.
 
 This workspace is **stack-and-domain agnostic**: it works for any NestJS backend — modular monolith or microservice, REST or GraphQL, any ORM (TypeORM / Prisma / Mongoose / Sequelize), any database. The layering, boundaries, and naming below are the constant; the business domain and the chosen libraries are the variable.
 
@@ -58,7 +58,7 @@ src/
 ├── core/                            # cross-cutting infrastructure (importable everywhere)
 │   ├── logger/                      # logger adapter (wraps pino/winston/Nest Logger)
 │   ├── errors/                      # typed AppError hierarchy + global exception filter
-│   ├── guards/                      # auth guard, permissions guard, ownership guard
+│   ├── auth/                        # auth/permission guards, identity/port contracts, decorators
 │   ├── interceptors/                # logging, timeout, transform-response
 │   ├── pipes/                       # e.g. a Zod validation pipe (optional)
 │   ├── http/ or adapters/           # shared outbound HTTP adapter
@@ -99,8 +99,11 @@ src/modules/<feature>/
 │   └── <feature>.entity.ts          # domain/persistence model
 ├── infrastructure/
 │   └── <feature>.repository.ts      # persistence only
+├── adapters/
+│   └── <vendor>.adapter.ts          # sole vendor importer behind an app-owned port
 ├── model/                           # NO inline declarations live in layer files — they live here
 │   ├── <feature>.types.ts
+│   ├── <feature>.interfaces.ts       # only when an established interface/port split earns it
 │   ├── <feature>.enums.ts
 │   └── <feature>.constants.ts
 └── lib/
@@ -118,18 +121,18 @@ src/modules/<feature>/
 
 ## 4. NestJS building blocks → where they live
 
-| NestJS concept         | Home                                                                   | Notes                                                   |
-| ---------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
-| `@Controller`          | `api/*.controller.ts`                                                  | Thin; `@UseGuards`, `@UsePipes`, custom decorators only |
-| `@Injectable` provider | `application/*.service.ts` or `*.use-case.ts`                          | Constructor DI; `private readonly` deps                 |
-| Guard (`CanActivate`)  | `core/guards/`                                                         | Auth, permissions (RBAC), ownership/tenant              |
-| Interceptor            | `core/interceptors/`                                                   | Logging, timeout, response shaping                      |
-| Pipe                   | global `ValidationPipe` in `bootstrap/`; custom pipes in `core/pipes/` | DTO validation                                          |
-| Exception filter       | `core/errors/`                                                         | Global filter sanitizes errors → safe `{ messageKey }`  |
-| Custom decorator       | `core/decorators/` or module `lib/`                                    | e.g. `@CurrentUser()`, `@RequirePermissions()`          |
-| Module                 | `<feature>.module.ts`, `app.module.ts`                                 | Dependency wiring + public surface                      |
-| Config                 | `config/`                                                              | `ConfigModule.forRoot` + validated schema               |
-| Repository / ORM       | `infrastructure/*.repository.ts`                                       | ORM client imported ONLY here (or an adapter)           |
+| NestJS concept         | Home                                                                        | Notes                                                    |
+| ---------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `@Controller`          | `api/*.controller.ts`                                                       | Thin; `@UseGuards`, `@UsePipes`, custom decorators only  |
+| `@Injectable` provider | `application/*.service.ts` or `*.use-case.ts`                               | Constructor DI; `private readonly` deps                  |
+| Guard (`CanActivate`)  | `core/auth/`                                                                | Auth + permissions; ownership remains application/domain |
+| Interceptor            | `core/interceptors/`                                                        | Logging, timeout, response shaping                       |
+| Pipe                   | global `ValidationPipe` in `bootstrap/`; shared pipes in `core/validation/` | DTO/parameter validation                                 |
+| Exception filter       | `core/errors/`                                                              | Global filter sanitizes errors → safe `{ messageKey }`   |
+| Custom decorator       | `core/auth/` or the owning core/module concern                              | e.g. `@CurrentUser()`, `@RequirePermissions()`           |
+| Module                 | `<feature>.module.ts`, `app.module.ts`                                      | Dependency wiring + public surface                       |
+| Config                 | `config/`                                                                   | `ConfigModule.forRoot` + validated schema                |
+| Repository / ORM       | `infrastructure/*.repository.ts`                                            | ORM client imported ONLY here (or an adapter)            |
 
 ---
 
@@ -161,12 +164,13 @@ The custom plugin in [`/eslint/architecture-plugin`](../eslint/architecture-plug
   - API DTOs cannot import services, repositories, or infrastructure;
   - external libraries (HTTP clients, loggers, ORMs, brokers) can only be imported inside their adapter directories;
   - `process.env` can only be read in `config/`, `bootstrap/`, `*.config.ts`, `*.providers.ts`.
-- **`architecture/no-inline-layer-declarations`** — implementation-layer files (controllers, services, use cases, repositories, adapters, guards, interceptors, pipes) contain only the class/function that belongs to that layer. No module-level `const`/`enum`/`interface`/`type`/helper functions (only a file-local `LOG_PREFIX` is allowed).
+- **`architecture/no-inline-layer-declarations`** — implementation-layer files (controllers, services, use cases, repositories, adapters, guards, interceptors, pipes, filters, handlers) contain only the class/function that belongs to that layer. No module-level declarations or anonymous type-literal contracts (only a file-local `LOG_PREFIX` is allowed).
+- **`architecture/no-definite-assignment-assertions`** — `field!: Type` is forbidden; framework-populated DTOs use `declare readonly`, stateful classes initialize fields.
 - **`architecture/no-dto-import-in-domain-or-use-case`** — domain and use-case logic depends on `model/*.types.ts` and `@shared/types`, not on API request/response DTOs.
 - **`architecture/no-use-case-import-in-service`** — dependency direction is one-way: use cases call services, never the reverse.
 - **`architecture/no-cross-module-internal-imports`** — private implementation layers of one module (`api/`, `application/`, `domain/`, `infrastructure/`) cannot be imported directly from another module. Use the owning module's `model/` layer or public barrel/index.
 - **`no-restricted-syntax`** — no `Promise.all|allSettled|any|race` inside services or adapters; module-level declaration coverage is now owned by the dedicated `architecture/no-inline-layer-declarations` rule.
-- **`max-lines-per-function: 20`** on `*.service.ts` — services stay orchestration-thin.
+- **`max-lines-per-function: 20`** on `*.service.ts`; **40** on other implementation-layer methods — services stay orchestration-thin and other layers remain reviewable.
 
 To adapt conventions for a project, change `moduleSuffix`/`layer` in [`architecture.config.mjs`](../eslint/architecture.config.mjs) — never hardcode names in the rule implementations.
 
@@ -176,7 +180,7 @@ To adapt conventions for a project, change `moduleSuffix`/`layer` in [`architect
 
 ```
 HTTP request
-  → Guard(s)         auth → permissions(RBAC) → ownership/tenant      (core/guards)
+  → Guard(s)         auth → permissions (core/auth) → ownership/tenant (application/domain)
   → Pipe             ValidationPipe transforms+validates the DTO       (bootstrap)
   → Controller       one delegation → application method               (api/*.controller.ts)
   → Use case/Service orchestrate domain + repository (+ transaction)   (application/*)

@@ -2,7 +2,7 @@
 
 > The canonical, copy-ready code for every layer and cross-cutting concern in this workspace. One tight, strict-TypeScript snippet per concern; each obeys the layer/import/lint rules. This implements [`architecture-map.md`](./architecture-map.md) and [`/rules/00-non-negotiable-rules.md`](../rules/00-non-negotiable-rules.md) — when in doubt, those win. Replace `<feature>` with your bounded feature; `Article` is used illustratively only.
 
-Every snippet here is **strict TS** (no `any`, no `!`, no inline declarations, explicit return types) and respects the one-way dependency rule and `architecture/*` ESLint rules. Use these as scaffolding starting points; generate new files with the [`/skills`](../skills/README.md).
+Every snippet here is **strict TS** (no `any`, no non-null/definite-assignment `!`, no inline or anonymous layer contracts, explicit return types) and respects the one-way dependency rule and `architecture/*` ESLint rules. Use these as scaffolding starting points; generate new files with the [`/skills`](../skills/README.md).
 
 ---
 
@@ -20,7 +20,6 @@ void bootstrap();
 ```ts
 // src/bootstrap/bootstrap.ts  (process.env permitted here)
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
@@ -28,9 +27,9 @@ import {
 } from '@nestjs/platform-fastify';
 
 import { AppModule } from '@app/app.module';
+import { AppConfigService } from '@config/app-config.service';
 import { AppExceptionFilter } from '@core/errors/app-exception.filter';
 import { AppLogger } from '@core/logger/app-logger.service';
-import type { AppConfig } from '@config/app.config';
 import { BODY_LIMIT_BYTES, LISTEN_HOST } from './bootstrap.constants';
 import { setupSwagger } from './swagger';
 
@@ -49,8 +48,8 @@ export async function createApp(): Promise<NestFastifyApplication> {
 
 export async function bootstrap(): Promise<void> {
   const app = await createApp();
-  const config = app.get(ConfigService<AppConfig, true>);
-  await app.listen(config.get('app.port', { infer: true }), LISTEN_HOST);
+  const config = app.get(AppConfigService);
+  await app.listen(config.app.port, LISTEN_HOST);
 }
 ```
 
@@ -73,7 +72,7 @@ export function setupSwagger(app: INestApplication): void {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(SWAGGER_PATH, app, document, {
-    swaggerOptions: { persistAuthorization: true },
+    swaggerOptions: { persistAuthorization: false },
   });
 }
 ```
@@ -84,36 +83,60 @@ export function setupSwagger(app: INestApplication): void {
 
 ## 2. Configuration — typed namespace + fail-fast validation
 
-Read config through `ConfigService`, never `process.env`, outside `config/`/`bootstrap/`. Validate at startup so invalid env crashes the boot, not a request three hours later.
+Read config through the app-owned `AppConfigService`, never `process.env`, outside `config/`/`bootstrap/`. Validate at startup so invalid env crashes the boot, not a request three hours later.
 
 ```ts
-// src/config/app.config.ts  (process.env permitted here)
-import { registerAs } from '@nestjs/config';
-
-import { DEFAULT_PORT } from './config.constants';
-import type { AppNamespaceConfig } from './config.types';
-
-export const appConfig = registerAs('app', (): AppNamespaceConfig => ({
-  port: Number(process.env['PORT'] ?? DEFAULT_PORT),
-  nodeEnv: process.env['NODE_ENV'] ?? 'development',
-}));
+// src/config/config.types.ts
+export interface AppNamespaceConfig {
+  readonly port: number;
+  readonly nodeEnv: NodeEnv;
+}
 
 export interface AppConfig {
-  app: AppNamespaceConfig;
+  readonly app: AppNamespaceConfig;
 }
 ```
 
 ```ts
-// src/config/env.validation.ts  (process.env permitted here)
-import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsInt, Max, Min, validateSync } from 'class-validator';
-
+// src/config/app.config.ts  (process.env permitted here)
+import { registerAs } from '@nestjs/config';
 import { NodeEnv } from '@shared/enums';
 
-class EnvironmentVariables {
-  @IsEnum(NodeEnv) readonly NODE_ENV!: NodeEnv;
-  @IsInt() @Min(1) @Max(65535) readonly PORT!: number;
+import { DEFAULT_PORT } from './config.constants';
+import type { AppNamespaceConfig } from './config.types';
+
+import { APP_CONFIG_NAMESPACE } from './config.constants';
+
+export const appConfig = registerAs(
+  APP_CONFIG_NAMESPACE,
+  (): AppNamespaceConfig => ({
+    port: Number(process.env['PORT'] ?? DEFAULT_PORT),
+    nodeEnv: process.env['NODE_ENV'] ?? NodeEnv.Development,
+  }),
+);
+```
+
+```ts
+// src/config/environment-variables.dto.ts
+import { IsEnum, IsInt, Max, Min, Type } from '@core/validation';
+
+import { NodeEnv } from '@shared/enums';
+import { MAX_PORT, MIN_PORT } from './config.constants';
+
+export class EnvironmentVariables {
+  @IsEnum(NodeEnv) declare readonly NODE_ENV: NodeEnv;
+  @Type(() => Number)
+  @IsInt()
+  @Min(MIN_PORT)
+  @Max(MAX_PORT)
+  declare readonly PORT: number;
 }
+```
+
+```ts
+// src/config/env.validation.ts
+import { plainToInstance, validateSync } from '@core/validation';
+import { EnvironmentVariables } from './environment-variables.dto';
 
 export function validateEnv(
   raw: Record<string, unknown>,
@@ -189,11 +212,11 @@ import {
   type ArgumentsHost,
   type ExceptionFilter,
 } from '@nestjs/common';
-import type { FastifyReply } from 'fastify';
 
 import { AppError } from './app-error';
 import { GENERIC_ERROR_KEY } from './error.constants';
 import { toErrorBody } from './error-body.mapper';
+import type { HttpReplyLike } from '@core/http/http-reply.types';
 import { AppLogger } from '@core/logger/app-logger.service';
 
 @Catch()
@@ -201,7 +224,7 @@ export class AppExceptionFilter implements ExceptionFilter {
   constructor(private readonly logger: AppLogger) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
-    const reply = host.switchToHttp().getResponse<FastifyReply>();
+    const reply = host.switchToHttp().getResponse<HttpReplyLike>();
     if (exception instanceof AppError) {
       this.logger.warn('handled.app_error', {
         messageKey: exception.messageKey,
@@ -280,20 +303,19 @@ A controller method is **one** delegation: parse via DTO/decorators → call one
 
 ```ts
 // src/modules/article/api/article.controller.ts
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  type AuthUserIdentity,
+  CurrentUser,
+  RequirePermissions,
+} from '@core/auth';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Permission } from '@shared/enums';
 
 import { ArticleService } from '../application/article.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { ArticleResponseDto } from './dto/article-response.dto';
-import { CurrentUser } from '@core/decorators/current-user.decorator';
-import { RequirePermissions } from '@core/decorators/require-permissions.decorator';
-import { AuthGuard } from '@core/guards/auth.guard';
-import { PermissionsGuard } from '@core/guards/permissions.guard';
-import { Permission } from '@shared/enums';
-import type { AuthenticatedUser } from '@shared/types';
 
 @Controller('articles')
-@UseGuards(AuthGuard, PermissionsGuard)
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
@@ -301,7 +323,7 @@ export class ArticleController {
   @RequirePermissions(Permission.ArticleRead)
   getById(
     @Param('id') id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthUserIdentity,
   ): Promise<ArticleResponseDto> {
     return this.articleService.getById(id, user);
   }
@@ -310,7 +332,7 @@ export class ArticleController {
   @RequirePermissions(Permission.ArticleCreate)
   create(
     @Body() dto: CreateArticleDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthUserIdentity,
   ): Promise<ArticleResponseDto> {
     return this.articleService.create(dto, user);
   }
@@ -327,7 +349,8 @@ Validation lives in the DTO, not the service. `whitelist: true` strips unknown p
 
 ```ts
 // src/modules/article/api/dto/create-article.dto.ts
-import { IsEnum, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty } from '@core/openapi';
+import { IsEnum, IsString, MaxLength, MinLength } from '@core/validation';
 
 import { ArticleCategory } from '../../model/article.enums';
 import {
@@ -339,10 +362,10 @@ export class CreateArticleDto {
   @IsString()
   @MinLength(ARTICLE_TITLE_MIN)
   @MaxLength(ARTICLE_TITLE_MAX)
-  readonly title!: string;
+  declare readonly title: string;
 
   @IsEnum(ArticleCategory)
-  readonly category!: ArticleCategory;
+  declare readonly category: ArticleCategory;
 }
 ```
 
@@ -351,10 +374,10 @@ export class CreateArticleDto {
 import type { ArticleCategory } from '../../model/article.enums';
 
 export class ArticleResponseDto {
-  readonly id!: string;
-  readonly title!: string;
-  readonly category!: ArticleCategory;
-  readonly createdAt!: string;
+  declare readonly id: string;
+  declare readonly title: string;
+  declare readonly category: ArticleCategory;
+  declare readonly createdAt: string;
 }
 ```
 
@@ -373,11 +396,11 @@ import { Injectable } from '@nestjs/common';
 import { ArticleRepository } from '../infrastructure/article.repository';
 import { toArticleResponse } from '../lib/article.mappers';
 import { assertCanView } from '../domain/article.policy';
-import { CreateArticleDto } from '../api/dto/create-article.dto';
 import { ArticleResponseDto } from '../api/dto/article-response.dto';
 import { NotFoundError } from '@core/errors/not-found.error';
 import { ARTICLE_NOT_FOUND_KEY } from '../model/article.constants';
-import type { AuthenticatedUser } from '@shared/types';
+import type { CreateArticleData } from '../model/article.types';
+import type { AuthUserIdentity } from '@core/auth';
 
 @Injectable()
 export class ArticleService {
@@ -385,7 +408,7 @@ export class ArticleService {
 
   async getById(
     id: string,
-    user: AuthenticatedUser,
+    user: AuthUserIdentity,
   ): Promise<ArticleResponseDto> {
     const article = await this.articleRepo.findById(id);
     if (article === null) {
@@ -396,10 +419,13 @@ export class ArticleService {
   }
 
   async create(
-    dto: CreateArticleDto,
-    user: AuthenticatedUser,
+    data: CreateArticleData,
+    user: AuthUserIdentity,
   ): Promise<ArticleResponseDto> {
-    const created = await this.articleRepo.create({ ...dto, ownerId: user.id });
+    const created = await this.articleRepo.create({
+      ...data,
+      ownerId: user.id,
+    });
     return toArticleResponse(created);
   }
 }
@@ -422,8 +448,8 @@ import { DomainEventBus } from '@core/events/domain-event-bus';
 import { ArticleService } from './article.service';
 import { ReviewService } from '../../review/index';
 import { buildPublishedEvent } from '../lib/article.events';
-import type { ArticleResponseDto } from '../api/dto/article-response.dto';
-import type { AuthenticatedUser } from '@shared/types';
+import type { Article } from '../model/article.types';
+import type { AuthUserIdentity } from '@core/auth';
 
 @Injectable()
 export class PublishArticleUseCase {
@@ -434,10 +460,7 @@ export class PublishArticleUseCase {
     private readonly events: DomainEventBus,
   ) {}
 
-  async execute(
-    id: string,
-    user: AuthenticatedUser,
-  ): Promise<ArticleResponseDto> {
+  async execute(id: string, user: AuthUserIdentity): Promise<Article> {
     const published = await this.uow.run(async tx => {
       const article = await this.articles.markPublished(id, user, tx);
       await this.reviews.closeOpenReviews(id, tx);
@@ -532,35 +555,41 @@ export type { ArticleResponseDto } from './api/dto/article-response.dto';
 Every protected route chains an auth guard → a permissions (RBAC) guard → an ownership/tenant check. Identity comes from the verified token; the permissions guard reads required permissions from decorator metadata.
 
 ```ts
-// src/core/decorators/require-permissions.decorator.ts
+// src/core/auth/require-permissions.decorator.ts
+import type { CustomDecorator } from '@nestjs/common';
 import { SetMetadata } from '@nestjs/common';
 
-import { REQUIRE_PERMISSIONS_KEY } from '@core/guards/guard.constants';
+import { AUTH_PERMISSIONS_KEY } from './auth.constants';
 import type { Permission } from '@shared/enums';
 
 export function RequirePermissions(
   ...permissions: readonly Permission[]
-): MethodDecorator {
-  return SetMetadata(REQUIRE_PERMISSIONS_KEY, permissions);
+): CustomDecorator {
+  return SetMetadata(AUTH_PERMISSIONS_KEY, permissions);
 }
 ```
 
 ```ts
-// src/core/guards/permissions.guard.ts
+// src/core/auth/permissions.guard.ts
 import {
   Injectable,
   type CanActivate,
   type ExecutionContext,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { FastifyRequest } from 'fastify';
 
-import { REQUIRE_PERMISSIONS_KEY } from './guard.constants';
 import { ForbiddenError } from '@core/errors/forbidden.error';
-import { FORBIDDEN_KEY } from './guard.constants';
-import { hasAllPermissions } from './permission.helper';
+import { UnauthorizedError } from '@core/errors/unauthorized.error';
 import type { Permission } from '@shared/enums';
-import type { AuthenticatedUser } from '@shared/types';
+import {
+  AUTH_IDENTITY_REQUIRED_MESSAGE,
+  AUTH_IDENTITY_REQUIRED_MESSAGE_KEY,
+  AUTH_PERMISSIONS_KEY,
+  AUTH_PERMISSION_DENIED_MESSAGE,
+  AUTH_PERMISSION_DENIED_MESSAGE_KEY,
+} from './auth.constants';
+import type { AuthRequest } from './auth.types';
+import { hasRequiredPermissions } from './permission.helpers';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
@@ -568,23 +597,32 @@ export class PermissionsGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const required = this.reflector.getAllAndOverride<readonly Permission[]>(
-      REQUIRE_PERMISSIONS_KEY,
+      AUTH_PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
     );
     if (required === undefined || required.length === 0) {
       return true;
     }
-    const request = context.switchToHttp().getRequest<FastifyRequest>();
-    const user = request.user as AuthenticatedUser | undefined;
-    if (user === undefined || !hasAllPermissions(user, required)) {
-      throw new ForbiddenError('Missing required permissions', FORBIDDEN_KEY);
+    const request = context.switchToHttp().getRequest<AuthRequest>();
+    const user = request.user;
+    if (user === undefined) {
+      throw new UnauthorizedError(
+        AUTH_IDENTITY_REQUIRED_MESSAGE,
+        AUTH_IDENTITY_REQUIRED_MESSAGE_KEY,
+      );
+    }
+    if (!hasRequiredPermissions(user.roles, required)) {
+      throw new ForbiddenError(
+        AUTH_PERMISSION_DENIED_MESSAGE,
+        AUTH_PERMISSION_DENIED_MESSAGE_KEY,
+      );
     }
     return true;
   }
 }
 ```
 
-> The `AuthGuard` runs first and attaches the verified `user`. See [`/rules/07-security-authn-authz.md`](../rules/07-security-authn-authz.md), [`/skills/add-guard-and-permission.md`](../skills/add-guard-and-permission.md), and reviewer [`/agents/backend-security-reviewer.md`](../agents/backend-security-reviewer.md).
+> The globally wired `JwtAuthGuard` runs first and attaches the verified `user`. See [`/rules/07-security-authn-authz.md`](../rules/07-security-authn-authz.md), [`/skills/add-guard-and-permission.md`](../skills/add-guard-and-permission.md), and reviewer [`/agents/backend-security-reviewer.md`](../agents/backend-security-reviewer.md).
 
 ---
 
@@ -606,19 +644,18 @@ export const EMAIL_PORT = Symbol('EMAIL_PORT');
 ```ts
 // src/adapters/email/provider-email.adapter.ts  (the ONLY place the vendor SDK is imported)
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 // import { ProviderClient } from 'email-provider-sdk';
 
+import { AppConfigService } from '@config/app-config.service';
 import { IntegrationError } from '@core/errors/integration.error';
 import { EMAIL_SEND_FAILED_KEY } from './email-adapter.constants';
 import { toProviderPayload } from './email-payload.mapper';
 import type { EmailPort } from '@core/email/email.port';
 import type { SendEmailCommand } from '@core/email/email.types';
-import type { AppConfig } from '@config/app.config';
 
 @Injectable()
 export class ProviderEmailAdapter implements EmailPort {
-  constructor(private readonly config: ConfigService<AppConfig, true>) {}
+  constructor(private readonly config: AppConfigService) {}
 
   async send(command: SendEmailCommand): Promise<void> {
     try {

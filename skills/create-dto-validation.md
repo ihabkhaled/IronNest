@@ -52,7 +52,7 @@ Bound every string and array. Enums via `@IsEnum`. Coerce numbers with explicit 
 
 ```ts
 // api/dto/create-<feature>.dto.ts
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@core/openapi';
 import {
   ArrayMaxSize,
   IsArray,
@@ -60,7 +60,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
-} from 'class-validator';
+} from '@core/validation';
 import { FeatureVisibility } from '@modules/feature/model/feature.enums';
 import {
   FEATURE_TAGS_MAX,
@@ -71,11 +71,11 @@ export class CreateFeatureDto {
   @ApiProperty({ maxLength: FEATURE_TITLE_MAX })
   @IsString({ message: 'errors.feature.title.invalid' })
   @MaxLength(FEATURE_TITLE_MAX, { message: 'errors.feature.title.maxLength' })
-  readonly title!: string;
+  declare readonly title: string;
 
   @ApiProperty({ enum: FeatureVisibility })
   @IsEnum(FeatureVisibility, { message: 'errors.feature.visibility.invalid' })
-  readonly visibility!: FeatureVisibility;
+  declare readonly visibility: FeatureVisibility;
 
   @ApiPropertyOptional({ type: [String], maxItems: FEATURE_TAGS_MAX })
   @IsOptional()
@@ -98,7 +98,7 @@ create(@Body() body: { title: string }): Promise<FeatureResponseDto> { /* ... */
 
 ```ts
 // api/dto/update-<feature>.dto.ts
-import { PartialType } from '@nestjs/swagger';
+import { PartialType } from '@core/openapi';
 import { CreateFeatureDto } from '@modules/feature/api/dto/create-feature.dto';
 
 export class UpdateFeatureDto extends PartialType(CreateFeatureDto) {}
@@ -110,8 +110,7 @@ Query values arrive as strings. Coerce with `@Type`, cap `limit` at the shared m
 
 ```ts
 // api/dto/list-<feature>-query.dto.ts
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@core/openapi';
 import {
   IsEnum,
   IsInt,
@@ -120,7 +119,8 @@ import {
   Max,
   MaxLength,
   Min,
-} from 'class-validator';
+  Type,
+} from '@core/validation';
 import {
   FeatureSortField,
   FeatureVisibility,
@@ -177,18 +177,18 @@ Return a `<Feature>ResponseDto` shaped by a mapper in `lib/<feature>.mappers.ts`
 
 ```ts
 // api/dto/<feature>-response.dto.ts
-import { ApiProperty } from '@nestjs/swagger';
-import { Exclude, Expose } from 'class-transformer';
+import { ApiProperty } from '@core/openapi';
+import { Exclude, Expose } from '@core/validation';
 import { FeatureVisibility } from '@modules/feature/model/feature.enums';
 
 @Exclude()
 export class FeatureResponseDto {
-  @Expose() @ApiProperty() readonly id!: string;
-  @Expose() @ApiProperty() readonly title!: string;
+  @Expose() @ApiProperty() declare readonly id: string;
+  @Expose() @ApiProperty() declare readonly title: string;
   @Expose()
   @ApiProperty({ enum: FeatureVisibility })
-  readonly visibility!: FeatureVisibility;
-  @Expose() @ApiProperty() readonly createdAt!: string;
+  declare readonly visibility: FeatureVisibility;
+  @Expose() @ApiProperty() declare readonly createdAt: string;
 }
 ```
 

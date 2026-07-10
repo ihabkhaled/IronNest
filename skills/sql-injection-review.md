@@ -41,7 +41,7 @@ Every runtime **value** must travel as a bound parameter. The find/where-object 
 ```ts
 // Do — parameterized find options (no string building at all)
 async findActiveByEmail(email: string): Promise<Account | null> {
-  return this.accounts.findOne({ where: { email, status: AccountStatus.ACTIVE } });
+  return this.accounts.findOne({ where: { email, status: AccountStatus.Active } });
 }
 
 // Do — positional bind for raw SQL

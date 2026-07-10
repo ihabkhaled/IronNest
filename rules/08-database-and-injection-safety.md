@@ -78,7 +78,7 @@ applySorting(
 qb.orderBy(`account.${query.sort}`, 'DESC'); // ❌ identifier injection
 ```
 
-- **Sort direction** is an enum (`SortDirection.ASC | DESC`), validated in the DTO — never pass a raw `order` string into `orderBy`.
+- **Sort direction** is an enum (`SortDirection.Asc | SortDirection.Desc`), validated in the DTO — never pass a raw `order` string into `orderBy`.
 - **Table / entity names are static**, fixed at compile time. They never come from input.
 - Do the same for any feature that needs structured ordering: build a typed order object from the allowlist rather than passing the raw key through.
 

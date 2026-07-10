@@ -27,7 +27,7 @@ A domain event announces a fact that already happened. Emit it **after** the tra
 // DO — use case commits, THEN emits (post-commit, fire-and-forget)
 async execute(input: PublishOrderInput): Promise<OrderResult> {
   const order = await this.uow.run((tx) => this.orders.publish(input, tx));
-  this.events.emit(OrderEvent.PUBLISHED, this.mapper.toPublishedEvent(order));
+  this.events.emit(OrderEvent.Published, this.mapper.toPublishedEvent(order));
   return this.mapper.toResult(order);
 }
 ```
@@ -36,7 +36,7 @@ async execute(input: PublishOrderInput): Promise<OrderResult> {
 // DON'T — emit inside the transaction; a later rollback leaves handlers acting on a ghost
 await this.uow.run(async tx => {
   const order = await this.orders.publish(input, tx);
-  this.events.emit(OrderEvent.PUBLISHED, order); // handler may read uncommitted state
+  this.events.emit(OrderEvent.Published, order); // handler may read uncommitted state
 });
 ```
 
@@ -64,7 +64,7 @@ export class EventBus {
 ```
 
 - Payloads are **typed** in `model/<feature>.types.ts` — no inline payload shapes anywhere (rule 10). A payload carries identifiers and the facts a handler needs, plus a correlation id (§9); it never carries secrets or full entities.
-- Handlers register declaratively with `@OnEvent(OrderEvent.PUBLISHED)` on a provider in the consuming module — **never** by reaching into another module's bus directly.
+- Handlers register declaratively with `@OnEvent(OrderEvent.Published)` on a provider in the consuming module — **never** by reaching into another module's bus directly.
 - Multiple handlers may subscribe to one event. The publisher is unaware of how many.
 
 ---
@@ -105,7 +105,7 @@ export class NotifyOnOrderPublishedHandler {
     private readonly logger: AppLogger,
   ) {}
 
-  @OnEvent(OrderEvent.PUBLISHED)
+  @OnEvent(OrderEvent.Published)
   async handle(event: OrderPublishedEvent): Promise<void> {
     try {
       await this.notifier.notifySubscribers(event.orderId);
@@ -122,7 +122,7 @@ export class NotifyOnOrderPublishedHandler {
 
 ```ts
 // DON'T — an unhandled throw aborts the publisher's success path
-@OnEvent(OrderEvent.PUBLISHED)
+@OnEvent(OrderEvent.Published)
 async handle(event: OrderPublishedEvent): Promise<void> {
   await this.notifier.notifySubscribers(event.orderId); // throws → transition fails
 }
@@ -130,7 +130,7 @@ async handle(event: OrderPublishedEvent): Promise<void> {
 
 A handler is a thin transport into the application layer: validate prerequisite state, delegate to a service/use case, catch. Heavy work belongs in a service, not the handler body. If a handler fans out to many recipients, contain partial failures with `Promise.allSettled` in a use case/adapter (never a service — banned by ESLint), per [10-reliability-and-durability.md](./10-reliability-and-durability.md) §8.
 
-> **Test contract:** adding a new subscriber changes the registered-handler count. Assert it — `expect(emitter.listenerCount(OrderEvent.PUBLISHED)).toBe(N)` — so a silently-unregistered handler fails CI ([11-testing-and-coverage.md](./11-testing-and-coverage.md)). Forgetting to bump this is a very common miss.
+> **Test contract:** adding a new subscriber changes the registered-handler count. Assert it — `expect(emitter.listenerCount(OrderEvent.Published)).toBe(N)` — so a silently-unregistered handler fails CI ([11-testing-and-coverage.md](./11-testing-and-coverage.md)). Forgetting to bump this is a very common miss.
 
 ---
 
@@ -176,11 +176,11 @@ async run(payload: ReportJobPayload): Promise<void> {
   try {
     const result = await this.generator.build(payload);
     await this.results.complete(payload.jobId, result);   // terminal: COMPLETED
-    this.events.emit(ReportEvent.READY, { jobId: payload.jobId, correlationId: payload.correlationId });
+    this.events.emit(ReportEvent.Ready, { jobId: payload.jobId, correlationId: payload.correlationId });
   } catch (error: unknown) {
     this.logger.error('report job failed', { jobId: payload.jobId, correlationId: payload.correlationId, error });
     await this.results.markFailed(payload.jobId, this.toReason(error)); // terminal: FAILED
-    this.events.emit(ReportEvent.FAILED, { jobId: payload.jobId, correlationId: payload.correlationId });
+    this.events.emit(ReportEvent.Failed, { jobId: payload.jobId, correlationId: payload.correlationId });
   }
 }
 ```
@@ -195,8 +195,8 @@ try {
 ```
 
 - Persisting the terminal record and emitting the signal are **independent** concerns — when you do both, isolate each in its own `try/catch` so a failed signal never skips the durable record (the pattern in [10-reliability-and-durability.md](./10-reliability-and-durability.md) §7).
-- A status carried by clients is an enum in `model/` (`PENDING | RUNNING | COMPLETED | FAILED | TIMED_OUT`) — never raw strings (rules 8, 12).
-- A job that exceeds its timeout transitions to `TIMED_OUT` and is itself a terminal state — not a hang.
+- A status carried by clients is an enum in `model/` (`JobStatus.Pending | Running | Completed | Failed | TimedOut`) — never raw strings (rules 8, 12).
+- A job that exceeds its timeout transitions to `JobStatus.TimedOut`, itself a terminal state—not a hang.
 
 ---
 
@@ -220,13 +220,13 @@ try {
     upstream,
     STREAM_IDLE_TIMEOUT_MS,
   )) {
-    subject.next({ type: StreamEvent.CHUNK, data: chunk });
+    subject.next({ type: StreamEvent.Chunk, data: chunk });
   }
-  subject.next({ type: StreamEvent.DONE });
+  subject.next({ type: StreamEvent.Done });
 } catch (error: unknown) {
   this.logger.error('stream failed', { correlationId, error });
   subject.next({
-    type: StreamEvent.ERROR,
+    type: StreamEvent.Error,
     messageKey: this.toMessageKey(error),
   });
 } finally {

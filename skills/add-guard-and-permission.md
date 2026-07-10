@@ -15,8 +15,8 @@
 
 - `src/shared/constants/permissions.ts` — the frozen `Permission` catalog (single source of truth).
 - `src/shared/constants/roles.ts` — the role → permission matrix (which role gets which grants).
-- `src/core/decorators/require-permissions.decorator.ts` — `@RequirePermissions(...)` metadata stamp.
-- `src/core/guards/` — `jwt-auth.guard.ts` (authn), `permissions.guard.ts` (authz).
+- `src/core/auth/require-permissions.decorator.ts` — `@RequirePermissions(...)` metadata stamp.
+- `src/core/auth/` — `jwt-auth.guard.ts` (authn), `permissions.guard.ts` (authz), identity/port contracts.
 - The target `src/modules/<feature>/api/<feature>.controller.ts` and its service/use-case.
 
 ---
@@ -79,14 +79,14 @@ Reference the catalog member through `@RequirePermissions`. Keep the controller 
 ```ts
 // src/modules/article/api/article.controller.ts
 @Controller('articles')
-@UseGuards(JwtAuthGuard, PermissionsGuard) // authn → authz, module-wide
+// JwtAuthGuard → PermissionsGuard are wired globally; @Public() opts out.
 export class ArticleController {
   constructor(private readonly articleService: ArticleService) {}
 
   @Get(':id')
   @RequirePermissions(Permission.ArticleRead) // authorization from the catalog
   getById(
-    @CurrentUser() actor: AuthenticatedUser, // identity from the verified token
+    @CurrentUser() actor: AuthUserIdentity, // identity from the verified token
     @Param('id', ParseUuidPipe) id: string, // validated transport input
   ): Promise<ArticleResponseDto> {
     return this.articleService.getOwnedById(actor, id); // ownership inside (step 4)
@@ -94,7 +94,7 @@ export class ArticleController {
 }
 ```
 
-For AND-semantics, pass multiple grants: `@RequirePermissions(Permission.AdminAccess, Permission.ArticleManage)` with `requireAll: true`.
+Multiple grants use AND-semantics: every value passed to `@RequirePermissions(...)` is required.
 
 ### 4. Add the ownership / tenant check for id-by-parameter routes
 
@@ -102,7 +102,7 @@ Guards prove the actor may touch _some_ article — not _this_ one. Scope the re
 
 ```ts
 // src/modules/article/application/article.service.ts
-async getOwnedById(actor: AuthenticatedUser, id: string): Promise<Article> {
+async getOwnedById(actor: AuthUserIdentity, id: string): Promise<Article> {
   const article = await this.repo.findByIdForTenant(id, actor.tenantId);
   if (article === null) {
     throw new NotFoundError('errors.article.not_found'); // not "forbidden"
@@ -137,7 +137,7 @@ Never bypass Husky hooks with `--no-verify`. A green build is not proof of secur
 - **Catalog entry without role wiring** — non-admin roles silently get nothing; only admins (who inherit all) work, masking the gap. Wire step 2.
 - **Raw permission literal** at the call site — fails lint (no magic strings) and drifts from the catalog. Always reference `Permission.*`.
 - **Trusting a client-supplied owner/tenant id** — read identity from `@CurrentUser()`; treat any owner/tenant field in body/query as untrusted (IDOR risk).
-- **`@RequirePermissions` without the guards** — the decorator only stamps metadata; without `JwtAuthGuard` + `PermissionsGuard` it does nothing. Confirm the `@UseGuards` chain.
+- **`@RequirePermissions` without the guards** — the decorator only stamps metadata. Confirm production bootstrap globally wires `JwtAuthGuard` then `PermissionsGuard`.
 - **Returning "forbidden" for an out-of-scope id** — confirms existence across tenants. Return not-found.
 - **Resolving permissions from the JWT claims** — a stale token keeps a revoked grant. The guard derives the effective set server-side per request.
 - **New locale key missing** — the deny path throws an unmapped `messageKey`. Add it for every supported locale.

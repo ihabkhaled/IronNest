@@ -73,7 +73,7 @@ Pure domain policies need no module at all — instantiate or call directly. The
 ```typescript
 // DO — pure policy: feed inputs, assert outputs and thrown invariants
 it('rejects an illegal state transition', () => {
-  expect(() => assertTransition(OrderStatus.CLOSED, OrderStatus.DRAFT)).toThrow(
+  expect(() => assertTransition(OrderStatus.Closed, OrderStatus.Draft)).toThrow(
     InvalidTransitionError,
   );
 });
@@ -89,14 +89,14 @@ Every `it` follows **Arrange → Act → Assert**, separated by blank lines, wit
 // DO — clear AAA, asserts the result AND the call
 it('returns the order for its owner', async () => {
   // Arrange
-  const order = { id: 'order-1', ownerId: 'user-1', status: OrderStatus.DRAFT };
+  const order = { id: 'order-1', ownerId: 'user-1', status: OrderStatus.Draft };
   repo.findById.mockResolvedValue(order);
 
   // Act
   const result = await service.getOwned('order-1', 'user-1');
 
   // Assert
-  expect(result.status).toBe(OrderStatus.DRAFT); // enum member, never 'DRAFT'
+  expect(result.status).toBe(OrderStatus.Draft); // enum member, never a raw string
   expect(repo.findById).toHaveBeenCalledWith('order-1');
 });
 ```
@@ -126,7 +126,7 @@ it('throws OrderForbiddenError on cross-owner access', async () => {
   repo.findById.mockResolvedValue({
     id: 'order-1',
     ownerId: 'user-2',
-    status: OrderStatus.DRAFT,
+    status: OrderStatus.Draft,
   });
 
   await expect(service.getOwned('order-1', 'user-1')).rejects.toBeInstanceOf(
@@ -299,7 +299,7 @@ DO:     vi.mock / vi.fn / vi.spyOn / vi.hoisted / vi.useFakeTimers / npm run tes
 npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsgo --noEmit, project-wide
 npm run test            # vitest run — full suite
-npm run test:coverage   # statements/branches/functions/lines ≥ 95% (critical paths ~100%)
+npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
 npm run build           # compiles clean
 ```
 

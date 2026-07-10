@@ -2,7 +2,7 @@
 
 > The house testing standard for this NestJS backend: strategy, layers, coverage, fixtures, gates, and the bug→retest loop. It implements the canon — [00 non-negotiable rules](../rules/00-non-negotiable-rules.md) (rule 42: no behavior change without tests, written first), [11 testing & coverage](../rules/11-testing-and-coverage.md), and the [architecture map](../context/architecture-map.md) — and binds the engineering test suite to the SDLC test artifacts in [/docs](../docs/) and [/test-cases](../test-cases/).
 
-Toolchain is fixed: **Vitest 4** (`@vitest/coverage-istanbul`) + **@nestjs/testing** + **supertest** on **NestJS 11 / Fastify**. No `jest`, no `ts-jest`, no `tsc`. See [stack-and-toolchain.md](../context/stack-and-toolchain.md).
+Toolchain is fixed: **Vitest 4** with the configured **V8 coverage provider** + **@nestjs/testing** + **supertest** on **NestJS 11 / Fastify**. No `jest`, no `ts-jest`, no `tsc`. See [stack-and-toolchain.md](../context/stack-and-toolchain.md).
 
 ---
 
@@ -14,7 +14,7 @@ Toolchain is fixed: **Vitest 4** (`@vitest/coverage-istanbul`) + **@nestjs/testi
 | [unit-testing-standard.md](./unit-testing-standard.md)               | Isolated domain/service/policy tests with mocked collaborators |
 | [integration-testing-standard.md](./integration-testing-standard.md) | Module wiring + real persistence behind the repository         |
 | [e2e-testing-standard.md](./e2e-testing-standard.md)                 | Full HTTP boot via `@nestjs/testing` + `supertest`             |
-| [coverage-policy.md](./coverage-policy.md)                           | The 95% floor, touched-module measurement, waivers             |
+| [coverage-policy.md](./coverage-policy.md)                           | Exact metric floors, touched-file review, waivers              |
 | [test-data-and-fixtures.md](./test-data-and-fixtures.md)             | Builders/factories, deterministic data, isolation & cleanup    |
 | [quality-gates.md](./quality-gates.md)                               | The exact commands that must be green before "done"            |
 | [bug-triage-and-retest.md](./bug-triage-and-retest.md)               | Severity, root-cause, regression test, retest evidence         |
@@ -42,7 +42,7 @@ Toolchain is fixed: **Vitest 4** (`@vitest/coverage-istanbul`) + **@nestjs/testi
 - Test through the real seams: boot the module with `@nestjs/testing`, drive HTTP with `supertest`, mock only at the adapter/repository boundary.
 - Verify **persisted truth**, not just a 2xx. After a write, read it back through the repository.
 - Deterministic always: control time, seed randomness, no arbitrary `sleep`.
-- Coverage floor is **95%** on touched modules; critical paths (auth, money, tenant isolation, state machines) near 100%.
+- Coverage is 95% statements/functions/lines and 90% measured branches for decorator artifacts; every real changed branch and critical path is covered.
 
 ---
 
@@ -168,7 +168,7 @@ Reusable scenario cases (not just code) live under [/test-cases](../test-cases/)
 ```bash
 npm run test            # vitest run — unit + integration + e2e
 npm run test:watch      # vitest — local TDD loop
-npm run test:coverage   # vitest run --coverage — enforces the 95% floor
+npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
 ```
 
 Full gate (must all be green before "done") — see [quality-gates.md](./quality-gates.md):

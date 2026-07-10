@@ -1,6 +1,6 @@
 # Simple Code Map — Where Simplicity Concerns Live
 
-> The navigation companion to [rules 20–24](../rules/README.md): where helpers, constants, decisions, and shapes belong, when to extract, and when **not** to create a new file. This file routes; the rules decide. When in doubt, [/rules/20-simple-readable-code.md](../rules/20-simple-readable-code.md) and [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) (rules 43–46) win.
+> The navigation companion to [rules 20–30](../rules/README.md): where helpers, constants, decisions, and shapes belong, when to extract, and when **not** to create a new file. This file routes; the rules decide. When in doubt, [/rules/20-simple-readable-code.md](../rules/20-simple-readable-code.md), [/rules/30-declaration-ownership.md](../rules/30-declaration-ownership.md), and rule 00 win.
 
 Use this as a lookup while running the Simple Code Ladder — after step 1 ("does it need to exist?") and during step 2 ("does IronNest already have this?").
 
@@ -8,17 +8,18 @@ Use this as a lookup while running the Simple Code Ladder — after step 1 ("doe
 
 ## 1. Where does it belong?
 
-| You are writing…                                  | It belongs in…                                                       | Rule                                                                                                  |
-| ------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| A pure mapper / formatter / computation           | `lib/<feature>.mappers.ts` / `.formatters.ts` / `.helpers.ts`        | [23 §3](../rules/23-function-service-file-size-discipline.md)                                         |
-| A business decision / invariant / named predicate | `domain/<feature>.policy.ts` (pure, testable)                        | [01](../rules/01-architecture-and-module-boundaries.md)                                               |
-| A constant / enum / type used in this module      | `model/<feature>.constants.ts` / `.enums.ts` / `.types.ts`           | [06](../rules/06-types-enums-constants.md)                                                            |
-| A cross-module constant / enum / type / util      | `src/shared/{constants,enums,types,utils}` (barrel `index.ts`)       | [06](../rules/06-types-enums-constants.md)                                                            |
-| A request/response shape                          | `api/dto/<name>.dto.ts` — boundary validation only                   | [05](../rules/05-dto-and-validation.md)                                                               |
-| An error + `messageKey`                           | `@core/errors` subclass + `model/*.constants.ts` key pair            | [18](../rules/18-error-handling-and-exceptions.md)                                                    |
-| Anything touching a vendor SDK                    | `adapters/<vendor>.adapter.ts` or the owning core module             | [12](../rules/12-library-wrapping-and-adapters.md)                                                    |
-| Auth / permission / ownership logic               | The central guard chain + permission catalog — **one owner, always** | [07](../rules/07-security-authn-authz.md)                                                             |
-| Pagination bounds / sort allowlists               | Named constants in `model/` + bounded query helpers                  | [04](../rules/04-repositories-and-persistence.md), [08](../rules/08-database-and-injection-safety.md) |
+| You are writing…                                   | It belongs in…                                                       | Rule                                                                                                  |
+| -------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| A pure mapper / formatter / computation            | `lib/<feature>.mappers.ts` / `.formatters.ts` / `.helpers.ts`        | [23 §3](../rules/23-function-service-file-size-discipline.md)                                         |
+| A business decision / invariant / named predicate  | `domain/<feature>.policy.ts` (pure, testable)                        | [01](../rules/01-architecture-and-module-boundaries.md)                                               |
+| A constant / enum / type used in this module       | `model/<feature>.constants.ts` / `.enums.ts` / `.types.ts`           | [06](../rules/06-types-enums-constants.md)                                                            |
+| A cross-module constant / enum / type / util       | `src/shared/{constants,enums,types,utils}` (barrel `index.ts`)       | [06](../rules/06-types-enums-constants.md)                                                            |
+| A request/response shape                           | `api/dto/<name>.dto.ts` — boundary validation only                   | [05](../rules/05-dto-and-validation.md)                                                               |
+| An error + `messageKey`                            | `@core/errors` subclass + `model/*.constants.ts` key pair            | [18](../rules/18-error-handling-and-exceptions.md)                                                    |
+| Anything touching a vendor SDK                     | `adapters/<vendor>.adapter.ts` or the owning core module             | [12](../rules/12-library-wrapping-and-adapters.md)                                                    |
+| Auth / permission / ownership logic                | The central guard chain + permission catalog — **one owner, always** | [07](../rules/07-security-authn-authz.md)                                                             |
+| Pagination bounds / sort allowlists                | Named constants in `model/` + bounded query helpers                  | [04](../rules/04-repositories-and-persistence.md), [08](../rules/08-database-and-injection-safety.md) |
+| A named/anonymous declaration in a layer signature | [declaration-ownership-map.md](./declaration-ownership-map.md)       | [30](../rules/30-declaration-ownership.md)                                                            |
 
 ## 2. Service or use case?
 
@@ -50,6 +51,10 @@ Use this as a lookup while running the Simple Code Ladder — after step 1 ("doe
 | Reviewing a diff for readability                  | [review-for-readable-code.md](../skills/review-for-readable-code.md)                                                                                                                         |
 | Dead or speculative code found                    | [remove-unnecessary-code.md](../skills/remove-unnecessary-code.md)                                                                                                                           |
 | Clever code passes gates but exhausts readers     | [refactor-smart-code-to-boring-code.md](../skills/refactor-smart-code-to-boring-code.md)                                                                                                     |
+| Inline declarations or DTO `!` found              | [refactor-inline-declarations.md](../skills/refactor-inline-declarations.md)                                                                                                                 |
+| Whole repository needs an ordered cleanup         | [full-codebase-cleanup.md](../skills/full-codebase-cleanup.md)                                                                                                                               |
+| Security/validation cleanup                       | [security-clean-code-map.md](./security-clean-code-map.md) / [validation-clean-code-map.md](./validation-clean-code-map.md)                                                                  |
+| Agent mirrors or policy pointers changed          | [prepare-agent-mirrors.md](../skills/prepare-agent-mirrors.md)                                                                                                                               |
 
 > **Simplicity never cuts safety.** Whatever this map routes you to, DTO validation, guards, ownership checks, `AppError`/`messageKey`, adapters, bounds, tests, and docs stay (rule 46).
 

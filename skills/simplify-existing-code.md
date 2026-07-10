@@ -1,8 +1,16 @@
 # Skill: Simplify Existing Code
 
-> Take code that already works but is hard to read — long methods, mixed responsibilities, decisions buried in orchestration, AI-generated excess — and make it boring: **characterization tests first**, **delete before restructuring**, **every piece moves to its owning layer**, and **public behavior stays byte-for-byte identical**. Implements [20-simple-readable-code.md](../rules/20-simple-readable-code.md), [21-yagni-and-minimalism.md](../rules/21-yagni-and-minimalism.md), and [22-reuse-before-creating.md](../rules/22-reuse-before-creating.md) (rules **43–46** of [00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md)).
+## Intent
 
-Use this skill when a file is hard to scan, a method runs long, a service owns several responsibilities, a use case contains decisions instead of orchestration, a repository contains business logic, an adapter leaks vendor types, test setup is unreadable, or an AI generated more code than the task needed. When the problem is purely structural size — a huge file that needs splitting behind a facade → use [decompose-large-file.md](./decompose-large-file.md); when the problem is cleverness rather than sprawl — nested ternaries, dense chains, type gymnastics → use [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md).
+Make working but hard-to-read code boring through characterization tests, deletion, and correct ownership while preserving public behavior.
+
+## When to use
+
+Use for hard-to-scan files, mixed responsibilities, misplaced decisions, business logic in repositories, vendor leaks, unreadable tests, or AI over-production.
+
+## When not to use
+
+For a pure structural split use [decompose-large-file.md](./decompose-large-file.md); for cleverness only use [refactor-smart-code-to-boring-code.md](./refactor-smart-code-to-boring-code.md); for changed behavior use the relevant authoring/security skill.
 
 ---
 
@@ -115,6 +123,14 @@ If moving responsibilities still leaves an oversized file, stop — that split b
 Same routes, DTOs, guards, transactions, event order, `messageKey`s, logging, and return shapes. Diff every moved body against the original; Step 1 tests pass unchanged. Untangle the last unreadable test setup into minimal named arrange helpers without touching assertions. Any genuine behavior improvement you found is a **separate, tested commit** — record it as a FOLLOW-UP, not a drive-by.
 
 ---
+
+## Checklist
+
+- [ ] Characterization tests pin every moved branch/error/security behavior.
+- [ ] Dead code removed before restructuring.
+- [ ] Each responsibility moved to its canonical owner.
+- [ ] Public contracts, guards, bounds, errors, tests, and docs remain.
+- [ ] No random split or parallel helper.
 
 ## Quality gates
 
