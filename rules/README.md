@@ -46,6 +46,7 @@ These engineering rules sit **inside** the governance lifecycle defined by the r
 | 28  | [`28-codebase-refactor-discipline.md`](./28-codebase-refactor-discipline.md)                   | Tests-first, responsibility-sliced whole-codebase cleanup                            |
 | 29  | [`29-agent-readiness-and-mirrors.md`](./29-agent-readiness-and-mirrors.md)                     | Canonical precedence, compact entrypoints, mirror synchronization                    |
 | 30  | [`30-declaration-ownership.md`](./30-declaration-ownership.md)                                 | Canonical homes for constants, types, interfaces, enums, DTOs, helpers, and maps     |
+| 31  | [`31-version-control-checkpoints.md`](./31-version-control-checkpoints.md)                     | Coherent independently green commits, prompt pushes, and no final mega-commit        |
 
 ## Standard workflow (every task)
 
@@ -56,5 +57,5 @@ These engineering rules sit **inside** the governance lifecycle defined by the r
 5. **Write/update tests first.**
 6. Make the minimal safe change in the correct layer.
 7. Run lint → typecheck → test → coverage → build until green.
-8. Update docs and the relevant SDLC artifacts ([`/docs`](../docs)).
-9. On a permanent change, update `claude.md` first; synchronize full `codex.md`/`cursor.md`, then compact pointers in `AGENTS.md`, all six family routers, `.cursorrules`, and `.cursor/rules`; record recurring mistakes in [`memory/known-pitfalls.md`](../memory/known-pitfalls.md).
+8. Update docs and the relevant SDLC artifacts ([`/docs`](../docs)); for permanent policy, update `claude.md` and its mirrors/pointers in the same batch.
+9. Stage one coherent concern, inspect it, run its focused gate, then commit and push it promptly to the explicitly authorized branch using [`31-version-control-checkpoints.md`](./31-version-control-checkpoints.md). Repeat for the next concern; never wait for a final mega-commit.

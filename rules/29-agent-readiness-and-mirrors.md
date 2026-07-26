@@ -10,7 +10,7 @@
 
 Each supported entrypoint must:
 
-- direct the agent to `claude.md`, rules index/00, architecture map, skills index, cleanup skill, declaration ownership, and known pitfalls;
+- direct the agent to `claude.md`, rules index/00, architecture map, skills index, cleanup skill, declaration ownership, green-checkpoint publication, and known pitfalls;
 - carry the compact Simple Code Ladder and minimum-safe-code sentence;
 - state that tests/docs/security/validation/auth/authorization/ownership/observability/architecture are never reduced;
 - identify whether it is a full mirror, bootstrap, active rule, or compact family entrypoint;

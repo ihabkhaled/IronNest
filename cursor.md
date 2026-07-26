@@ -198,7 +198,7 @@ If implementation work is completed in the same response, also include:
 /architecture/adrs/                     # decision records
 
 # Engineering operating system (the concrete "how")
-/rules/                                 # numbered engineering rules (00–30)
+/rules/                                 # numbered engineering rules (00–31)
 /skills/                                # step-by-step task playbooks
 /context/                               # architecture/navigation/simplicity maps
 /memory/                                # durable decisions + known pitfalls
@@ -1304,6 +1304,10 @@ Do not perform extraction mindlessly. Extract to improve clarity and ownership, 
 - every branch should map to one request ID, one approved workstream, or one intentionally grouped slice of a larger roadmap
 - do not mix unrelated cleanup, opportunistic refactors, dependency churn, or formatting noise into a feature or bug-fix branch without stating it explicitly
 - commits must be logically grouped, reviewable, and traceable to meaningful steps in the change
+- once a coherent batch and its focused deterministic gate are green, commit it immediately instead of holding finished work for one final commit
+- push each green commit promptly to the explicitly authorized branch; the task's branch authorization still controls whether that target is a feature branch or a shared branch such as `main`
+- every pushed commit must be independently understandable and must not rely on later uncommitted files, premature exports, or hidden local state to satisfy lint, type, test, build, or documentation contracts
+- split unrelated behavior, design, dependency, test, and documentation concerns into separate commits; do not manufacture arbitrary file-count splits that break an atomic behavior-and-proof batch
 - behavior-changing code must ship with its related tests and documentation updates in the same branch or pull request
 - commit messages must follow the repository convention; conventional commits are the default recommendation unless the company defines a stricter standard
 - commit subjects should describe the intent or behavior change, not vague labels such as `update`, `changes`, `misc`, or `fix stuff`
@@ -1313,6 +1317,7 @@ Do not perform extraction mindlessly. Extract to improve clarity and ownership, 
 - do not commit secrets, local environment files, machine-specific artifacts, private exports, raw production data, or disposable debug output
 - do not split a critical bug fix from its regression test unless a documented emergency sequence requires it
 - if a repository uses squash, rebase, merge commit, or stacked-change strategy, that strategy must be documented and followed consistently
+- never publish a known-red checkpoint, bypass hooks, or postpone all publication until a final mega-commit when a coherent green checkpoint is available
 
 ### Pull Request Packaging Rules
 

@@ -12,6 +12,7 @@ Always enforce:
 - CI/CD must use authoritative commands or scripts and run required checks in a clean environment
 - required jobs must be enforced, visible, and not silently optional
 - local gates such as pre-commit, pre-push, and commit-message checks must not be bypassed without documented emergency approval
+- each coherent independently green batch must be committed and pushed promptly to the explicitly authorized branch; never accumulate unrelated work into a final mega-commit
 - configuration, templates, bootstrap scripts, deployment manifests, and docs must be updated together
 - secrets must never be committed or exposed
 - feature flags and runtime toggles must have owner, rollout criteria, rollback criteria, and retirement expectations

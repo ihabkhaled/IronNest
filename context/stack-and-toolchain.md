@@ -50,6 +50,7 @@ This is Microsoft's official TypeScript 7 side-by-side migration. `@typescript/n
   - **pre-push** → `gate:push` (`gate:coverage` + `gate:build` + `gate:knowledge`).
 - **lint-staged** ([`.lintstagedrc.cjs`](../.lintstagedrc.cjs)) — lint+fix only staged files, then re-stage.
 - Never bypass hooks (`--no-verify`) without a recorded, approved emergency exception (see the SDLC policy in [`/claude.md`](../claude.md)).
+- Publish each independently green coherent batch promptly to the explicitly authorized branch. Inspect the staged diff, keep behavior with its proof, and never wait for a final multi-concern mega-commit ([rule 31](../rules/31-version-control-checkpoints.md)).
 
 ## npm scripts
 

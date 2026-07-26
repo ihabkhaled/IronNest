@@ -42,6 +42,7 @@ No one should modify code they have not read.
 8. Tests and documentation must be updated in the same delivery stream as behavior changes.
 9. Coverage is measured on touched modules, not only on global repository averages.
 10. No change is done unless it is reviewed, tested, secure, observable, documented, and reversible.
+11. Commit and push each independently green coherent batch promptly to the explicitly authorized branch; never accumulate unrelated work into a final mega-commit.
 
 ## Mandatory SDLC Shape
 
@@ -186,7 +187,7 @@ Before NestJS implementation read: `claude.md` → `context/architecture-map.md`
 
 Before writing code, run the IronNest Simple Code Ladder (`rules/20-simple-readable-code.md`, non-negotiable rules 43–46): need it → reuse existing → native/platform → existing adapter/dependency → small helper → direct readable code → new abstraction only when justified. Be lazy about code volume, never lazy about reading, validation, security, auth, permissions, ownership checks, tests, docs, observability, or architecture.
 
-The complete readability/refactor/declaration/agent canon is `rules/20`–`rules/30`. Also read `rules/28-codebase-refactor-discipline.md`, `rules/30-declaration-ownership.md`, `skills/full-codebase-cleanup.md`, `context/refactor-navigation.md`, `context/declaration-ownership-map.md`, and `memory/known-pitfalls.md`. `codex.md` already fulfills the full GPT/Codex/Sol mirror role.
+The complete readability/refactor/declaration/agent canon is `rules/20`–`rules/30`; version-control checkpoint policy is `rules/31-version-control-checkpoints.md`. Also read `rules/28-codebase-refactor-discipline.md`, `rules/30-declaration-ownership.md`, `rules/31-version-control-checkpoints.md`, `skills/full-codebase-cleanup.md`, `skills/publish-green-checkpoint.md`, `context/refactor-navigation.md`, `context/declaration-ownership-map.md`, and `memory/known-pitfalls.md`. `codex.md` already fulfills the full GPT/Codex/Sol mirror role.
 
 ## Final Instruction
 

@@ -73,6 +73,7 @@ Skills are procedures, not policy. When a skill and a rule appear to disagree, t
 | [fix-eslint-typecheck.md](./fix-eslint-typecheck.md)         | Drive `npm run lint` and `npm run typecheck` to zero — by root cause, never by suppression. |
 | [upgrade-toolchain-safely.md](./upgrade-toolchain-safely.md) | Upgrade packages/compiler/lint/CI through official compatibility paths and shared gates.    |
 | [final-validation.md](./final-validation.md)                 | Run the final diff review, git-safety, and full quality-gate sweep before commit/push.      |
+| [publish-green-checkpoint.md](./publish-green-checkpoint.md) | Split, prove, commit, push, and monitor each coherent batch without waiting for the end.    |
 
 ### Review — harden the thing
 
@@ -111,7 +112,8 @@ Follow this for **every** task. Do not skip steps; depth scales with the change,
 9. **Run integration/e2e tests** if you touched a route, the DB, or an adapter ([write-integration-tests.md](./write-integration-tests.md), [write-e2e-tests.md](./write-e2e-tests.md)).
 10. **Update docs in the same change** — Swagger decorators on the controller, module docs, the feature folder under [/docs/features/_template/](../docs/features/_template/), and the messageKey in each supported locale.
 11. **Log new pitfalls.** If you hit a recurring mistake, append a durable, abstract note to [/memory/known-pitfalls.md](../memory/known-pitfalls.md).
-12. **Before commit/push**, run [final-validation.md](./final-validation.md). Never stage blindly, never bypass hooks.
+12. **Before each commit**, run [final-validation.md](./final-validation.md). Never stage blindly and never bypass hooks.
+13. **Publish each green batch immediately** with [publish-green-checkpoint.md](./publish-green-checkpoint.md); monitor remote gates before expanding the same concern.
 
 ---
 
