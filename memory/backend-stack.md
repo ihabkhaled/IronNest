@@ -15,7 +15,7 @@ The split exists so every project inherits the same correctness machinery while 
 | Item                   | Choice                                                     | Rationale                                                                                                                                                    |
 | ---------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Runtime                | **Node.js 24.18.0 LTS** (`>=24.18.0 <25`, `npm >=11.16.0`) | Exact LTS baseline; pin runtime and package manager so CI and local agree.                                                                                   |
-| Language and CLI       | **TypeScript 7.0.2** via `@typescript/native`              | `@typescript/native` aliases `npm:typescript@7.0.2` and supplies the default `tsc` executable for typecheck and build.                                       |
+| Language and CLI       | **TypeScript 7.0.2** via `@typescript/native`              | Typecheck/build invoke the aliased native binary explicitly and `compiler:check` proves the package-pinned version.                                          |
 | Tool compatibility API | **TypeScript 6** via the package named `typescript`        | `npm:@typescript/typescript6@6.0.2` exists solely for Nest CLI, typescript-eslint, SonarJS, ts-node, and other compiler-API consumers.                       |
 | Framework              | **NestJS 11** on **Fastify** (`@nestjs/platform-fastify`)  | DI + module boundaries match the layered architecture; Fastify for throughput. `@nestjs/platform-express` stays installed so a project can switch platforms. |
 
@@ -72,24 +72,26 @@ The architecture rules are what make "controllers stay thin", "services stay sho
 ## Commit & git-hook toolchain (locked)
 
 - **Husky 9** ([.husky/](../.husky)):
-  - **pre-commit** → `lint-staged` (eslint --fix on staged) + `typecheck` (project-wide TypeScript 7 `tsc --noEmit`, not scoped to staged files).
+  - **pre-commit** → `gate:commit` (staged zero-warning lint + project-wide TypeScript 7 typecheck).
   - **commit-msg** → `commitlint` (Conventional Commits).
-  - **pre-push** → `test:coverage` + `build`.
+  - **pre-push** → `gate:push` (coverage + explicit TS7 build + knowledge integrity).
 - **lint-staged** — lint+fix only staged files, then re-stage.
 - Never bypass hooks with `--no-verify` without a recorded, approved emergency exception (see [/claude.md](../claude.md)). A bypass must record why, who approved, what was skipped, and when it will be restored.
 
 ## npm scripts (the canonical entrypoints)
 
-| Script                    | Command                                     | Purpose                       |
-| ------------------------- | ------------------------------------------- | ----------------------------- |
-| `start:dev`               | `nest start --watch`                        | Dev server with reload        |
-| `build`                   | `tsc -p tsconfig.build.json`                | TypeScript 7 build to `dist/` |
-| `start:prod`              | `node dist/src/main`                        | Run the compiled build        |
-| `typecheck`               | `tsc --pretty --noEmit --incremental false` | TypeScript 7 type check       |
-| `lint` / `lint:fix`       | `eslint` / `eslint --fix`                   | Lint (0 errors / 0 warnings)  |
-| `format` / `format:check` | `prettier --write .` / `--check .`          | Format / verify               |
-| `test` / `test:watch`     | `vitest run` / `vitest`                     | Tests                         |
-| `test:coverage`           | `vitest run --coverage`                     | Tests + coverage gate         |
+| Script                    | Command                                                      | Purpose                          |
+| ------------------------- | ------------------------------------------------------------ | -------------------------------- |
+| `start:dev`               | `nest start --watch`                                         | Dev server with reload           |
+| `compiler:check`          | `node tools/compiler/check-native-typescript.mjs`            | Prove TypeScript 7 CLI ownership |
+| `build`                   | explicit `@typescript/native/bin/tsc -p tsconfig.build.json` | TypeScript 7 build to `dist/`    |
+| `start:prod`              | `node dist/src/main`                                         | Run the compiled build           |
+| `typecheck`               | explicit `@typescript/native/bin/tsc --noEmit`               | TypeScript 7 type check          |
+| `gate:*`                  | shared public package scripts                                | Local hook and CI parity         |
+| `lint` / `lint:fix`       | `eslint` / `eslint --fix`                                    | Lint (0 errors / 0 warnings)     |
+| `format` / `format:check` | `prettier --write .` / `--check .`                           | Format / verify                  |
+| `test` / `test:watch`     | `vitest run` / `vitest`                                      | Tests                            |
+| `test:coverage`           | `vitest run --coverage`                                      | Tests + coverage gate            |
 
 CI and local hooks invoke **these same scripts** — no divergent shadow set of steps.
 
@@ -100,7 +102,7 @@ npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsc --noEmit, TypeScript 7, project-wide
 npm run test            # vitest
 npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
-npm run build           # tsc -p tsconfig.build.json, TypeScript 7
+npm run build           # explicit TypeScript 7 native CLI build
 ```
 
 A green build is **not** proof of correctness — walk [15-review-checklist.md](../rules/15-review-checklist.md) and prove behavior with tests.

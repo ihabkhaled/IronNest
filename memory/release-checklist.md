@@ -12,14 +12,15 @@ A change is releasable only when **all** of the following hold, in order. A gree
 
 ## 1. Hard gates — all green, no exceptions
 
-These map 1:1 to the Husky `pre-push` hook and CI. Run them yourself and report failures with the command, the failing file(s), and the exact error — never claim green when a gate is red.
+The canonical `gate:*` package scripts are shared by Husky and CI. Run them yourself and report failures with the command, the failing file(s), and the exact error — never claim green when a gate is red.
 
 ```bash
 npm run lint            # 0 errors AND 0 warnings
-npm run typecheck       # tsc --noEmit (TypeScript 7), project-wide (not just staged)
+npm run typecheck       # verifies and runs the native TypeScript 7 CLI, project-wide (not just staged)
 npm run test            # vitest
 npm run test:coverage   # ≥95% statements/functions/lines; measured branches ≥90%; real critical branches ~100%
-npm run build           # tsc -p tsconfig.build.json
+npm run build           # verifies and runs native TypeScript 7 against tsconfig.build.json
+npm run gate:knowledge  # generated AI context is current, verified, and within benchmark budgets
 ```
 
 - Run integration/e2e suites when routes, persistence, migrations, or integrations changed.

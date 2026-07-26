@@ -105,16 +105,16 @@ Never add application/service/use-case/repository/domain logic to the exclude li
 
 The floor is enforced where it cannot be skipped: the **Husky pre-push hook** (see [/context/stack-and-toolchain.md](../context/stack-and-toolchain.md)).
 
-| Gate                 | Hook         | Runs                                          | Blocks   |
-| -------------------- | ------------ | --------------------------------------------- | -------- |
-| Lint + typecheck     | pre-commit   | `lint-staged` + `npm run typecheck`           | commit   |
-| Commit format        | commit-msg   | `commitlint` (Conventional Commits)           | commit   |
-| **Coverage + build** | **pre-push** | **`npm run test:coverage` + `npm run build`** | **push** |
+| Gate                              | Hook         | Runs                                | Blocks |
+| --------------------------------- | ------------ | ----------------------------------- | ------ |
+| Lint + typecheck                  | pre-commit   | `npm run gate:commit`               | commit |
+| Commit format                     | commit-msg   | `commitlint` (Conventional Commits) | commit |
+| **Coverage + build + AI context** | **pre-push** | **`npm run gate:push`**             | push   |
 
-A red suite or a coverage dip below any threshold makes `npm run test:coverage` exit non-zero, which fails pre-push and stops the push. CI re-runs the same command in a clean environment so the gate cannot be a local-only illusion.
+A red suite or a coverage dip below any threshold makes `npm run gate:coverage` exit non-zero, which fails `gate:push` and stops the push. CI re-runs the same canonical gate in a clean environment so the gate cannot be a local-only illusion.
 
 - **Never** bypass with `git push --no-verify` (or `git commit --no-verify`) — banned by [/rules/00-non-negotiable-rules.md](../rules/00-non-negotiable-rules.md) and the SDLC policy in [/claude.md](../claude.md).
-- The local hook and CI use the **same** `npm run test:coverage` entrypoint — no divergent shadow steps.
+- The local hook and CI use the **same** `gate:*` entrypoints — no divergent shadow steps.
 
 ---
 

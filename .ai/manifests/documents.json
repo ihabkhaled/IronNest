@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T12:15:01.655Z",
+  "generatedAt": "2026-07-26T20:13:44.368Z",
   "documents": [
     {
       "path": "agents/backend-architect.md",
@@ -608,7 +608,7 @@
         "../memory/known-pitfalls.md",
         "../memory/ai-context-map.md"
       ],
-      "hash": "sha256:a7e197cf587df6e239fd9f4b2173d6d128277d60df59457c1a4d6ed305aa830e"
+      "hash": "sha256:298c05fc720a43cf90300375c3a6e7a765d7644246c3948d8249405fc25c2f4e"
     },
     {
       "path": "context/contracts-map.md",
@@ -1057,7 +1057,7 @@
         "you"
       ],
       "relatedPaths": [],
-      "hash": "sha256:68ef5429c5d8a4b7724eb30483603bb20ee743ee43bfda8851149975420ed9f8"
+      "hash": "sha256:8d6303effa86fc7f25141eee3bf7dc34f364a0ac067471a0181413579b3409da"
     },
     {
       "path": "context/validation-clean-code-map.md",
@@ -1123,7 +1123,7 @@
         "workspace"
       ],
       "relatedPaths": [],
-      "hash": "sha256:5d1c24e2be015f518a91a99893137d3d1e45a0212eff03ba7e4f20c58c9e6d4e"
+      "hash": "sha256:d55ebc0309fe5249a4e8c3daa5aa539dce26b5346adfc1435ebcf3754e4a0c8a"
     },
     {
       "path": "memory/backend-stack.md",
@@ -1157,7 +1157,7 @@
         "workspace"
       ],
       "relatedPaths": [],
-      "hash": "sha256:22605a69ec53620032591e0965ce1e416eca2501c5cee723dfdd4a9c09b48a6f"
+      "hash": "sha256:391a21e2404d44700ae248b2d13c5585405e254ce2fa27024c9e2289fcc99347"
     },
     {
       "path": "memory/code-simplicity-decisions.md",
@@ -1461,7 +1461,7 @@
         "./testing-strategy.md",
         "./ai-context-map.md"
       ],
-      "hash": "sha256:8732369e609cac7c25f26a6f1e45e95f049ade90af50fc8b79e3b39a5ea27727"
+      "hash": "sha256:ef75fdc2602ef2b1e7e558bb0c190fe48fed8dafcc03e58dd3ddc73692801d8b"
     },
     {
       "path": "memory/library-boundaries.md",
@@ -2013,7 +2013,7 @@
         "../skills/add-migration-backfill.md",
         "../memory/known-pitfalls.md"
       ],
-      "hash": "sha256:b8514dd6683fef6caa87ddf800dc273988987b2cbfafb6dc93a0ca1781dd3881"
+      "hash": "sha256:7bae2128ef62d5f5eeb026f2832237cc8f3dacfc0597d879fb8eec8a50be86e3"
     },
     {
       "path": "memory/reliability-patterns.md",
@@ -3120,29 +3120,24 @@
       "ruleNumber": 13,
       "implementsRule": [],
       "keywords": [
-        "--incremental",
-        "--noemit",
-        "--pretty",
+        "--max-warnings",
+        "--report-unused-disable-directives",
         "00-non-negotiable-rules",
         "5-char",
         "allow-with-description",
         "allowed",
-        "any",
         "architecture",
         "ban-ts-comment",
-        "before",
         "below",
-        "both",
+        "binary",
         "boundary",
         "branch",
-        "build",
         "canon",
         "catalog",
         "commit",
         "compiler",
         "complete",
         "config",
-        "coverage",
         "decision",
         "defect",
         "disagree",
@@ -3156,7 +3151,7 @@
         "exceptions",
         "exceptions-register",
         "exclusions",
-        "false",
+        "explicit",
         "file",
         "finding",
         "fix",
@@ -3172,15 +3167,16 @@
         "linked",
         "lint",
         "lint-scope",
-        "lint-staged",
         "loosenings",
         "maps",
+        "native",
         "npm",
         "only",
         "pass",
         "pre-commit",
         "pre-push",
         "print",
+        "push",
         "recorded",
         "register",
         "relaxation",
@@ -3188,22 +3184,23 @@
         "rules",
         "run",
         "sanctioned",
+        "scripts",
         "sdlc",
         "see",
+        "shared",
         "silence",
         "strict",
         "strictness",
-        "test",
         "test-file",
-        "them",
         "then",
+        "through",
         "ts-expect-error",
         "ts-ignore",
-        "tsc",
         "type",
         "typecheck",
         "typescript",
         "unrecorded",
+        "uses",
         "warnings",
         "wins",
         "zero-tolerance"
@@ -3219,7 +3216,7 @@
         "../context/stack-and-toolchain.md",
         "../memory/known-pitfalls.md"
       ],
-      "hash": "sha256:95e3be3d41bc489a756fe46fa3eb17500c205646c73d76862a31ba33fde63fc8"
+      "hash": "sha256:2e08f0d407d7cd1816c234ce74e64589ee2fa0db72a60ae28e27c9244bd94e87"
     },
     {
       "path": "rules/14-observability-and-logging.md",
@@ -5359,7 +5356,7 @@
         "../memory/release-checklist.md",
         "../memory/known-pitfalls.md"
       ],
-      "hash": "sha256:e595845845bcfd1ba61915885b48083fadf11bdd590a49718bee73d8c418d621"
+      "hash": "sha256:29c468b2cb3818f4ed5ef8fe542f5b1f90790f5bf211251894953ab111a0b80d"
     },
     {
       "path": "skills/fix-eslint-typecheck.md",
@@ -5789,7 +5786,7 @@
         "you"
       ],
       "relatedPaths": [],
-      "hash": "sha256:2c6cd6844051128dec6acb6c51b6cbe1af78afc4a70b93df3bfb07d9ad247f3c"
+      "hash": "sha256:413822fc79e206b08db8fcab4c53e382bc01fdb49a6905d6d642959d6c3cbf59"
     },
     {
       "path": "skills/refactor-inline-declarations.md",
@@ -6492,6 +6489,21 @@
       "hash": "sha256:4b790de9d53d6b3e00b6b3dc52019188cfe422fff5c8a1960d476291d749b401"
     },
     {
+      "path": "skills/upgrade-toolchain-safely.md",
+      "root": "skills",
+      "title": "Skill: Upgrade The Toolchain Safely",
+      "ruleNumber": null,
+      "implementsRule": [],
+      "keywords": [
+        "safely",
+        "skill",
+        "toolchain",
+        "upgrade"
+      ],
+      "relatedPaths": [],
+      "hash": "sha256:9b92edb95f8be4bca2f47a4d4d3e886e174ae8a0cd69a8a9fe611b1285aa3144"
+    },
+    {
       "path": "skills/write-e2e-tests.md",
       "root": "skills",
       "title": "Skill: Write API End-to-End Tests",
@@ -6939,7 +6951,7 @@
         "../context/stack-and-toolchain.md",
         "../memory/testing-strategy.md"
       ],
-      "hash": "sha256:55aa11ac02bda3da5d12babefb5c351a9315ea80bfc938b6b77c9189fea070ce"
+      "hash": "sha256:488be1d7b719e4caf9ff4976fb7df91cf6cae152f8b4bb8c18a4a5e261c7bbcb"
     },
     {
       "path": "testing/e2e-testing-standard.md",
@@ -7134,7 +7146,7 @@
         "../agents/backend-release-gatekeeper.md",
         "../context/stack-and-toolchain.md"
       ],
-      "hash": "sha256:32bd53a6017be9b0e6b2d93cd32dff0d258514ba0ee18771ac2724424b048314"
+      "hash": "sha256:a2411c6024bf6a2b115be984b8f528e829842711712b90847ec214e648b10c6e"
     },
     {
       "path": "testing/README.md",
@@ -7219,7 +7231,7 @@
         "../skills/write-e2e-tests.md",
         "../skills/final-validation.md"
       ],
-      "hash": "sha256:670798fe367c4cbeff08da806240d685c75acc8a1dee35eb3b581a5b2af79b45"
+      "hash": "sha256:6a7208cb8fb74135b9ba19f8e2c3c01cc30600b8aa6154973068be94abe4340c"
     },
     {
       "path": "testing/test-data-and-fixtures.md",

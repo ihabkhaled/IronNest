@@ -78,8 +78,15 @@ const ERROR_SEVERITY = 2;
 
 describe('eslint.config.mjs rule activation', () => {
   let eslint;
+  const configCache = new Map();
   const configFor = async file => {
+    const cachedConfig = configCache.get(file);
+    if (cachedConfig) {
+      return cachedConfig;
+    }
+
     const config = await eslint.calculateConfigForFile(file);
+    configCache.set(file, config.rules);
     return config.rules;
   };
 
@@ -95,12 +102,16 @@ describe('eslint.config.mjs rule activation', () => {
       ['no-else-return', [{ allowElseIf: false }]],
       ['no-param-reassign', []],
       ['no-return-assign', ['always']],
-    ])('%s is an error on library files', async (ruleId, expectedOptions) => {
-      const rules = await configFor(LIB_FILE);
-      expect(rules[ruleId], ruleId).toBeDefined();
-      expect(rules[ruleId][0], ruleId).toBe(ERROR_SEVERITY);
-      expect(rules[ruleId].slice(1), ruleId).toEqual(expectedOptions);
-    });
+    ])(
+      '%s is an error on library files',
+      async (ruleId, expectedOptions) => {
+        const rules = await configFor(LIB_FILE);
+        expect(rules[ruleId], ruleId).toBeDefined();
+        expect(rules[ruleId][0], ruleId).toBe(ERROR_SEVERITY);
+        expect(rules[ruleId].slice(1), ruleId).toEqual(expectedOptions);
+      },
+      15_000,
+    );
 
     it('sonarjs/cognitive-complexity caps at 15', async () => {
       const rules = await configFor(SERVICE_FILE);

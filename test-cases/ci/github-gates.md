@@ -8,19 +8,20 @@
 
 ## Local command cases
 
-1. `npm run lint` and `npm run format:check` exit zero.
-2. `npm run typecheck` reports TypeScript 7.0.2 and exits zero.
-3. `npm run test:unit` executes source and ESLint-rule suites without the E2E file.
-4. `npm run test:e2e` executes `test/app.e2e-spec.ts` without Playwright.
-5. `npm run test:coverage` executes the complete suite and enforces thresholds.
-6. `npm run build` creates `dist/src/main.js` through TypeScript 7.
-7. `npm run security:audit` and `npm run security:scan` report no blocking finding.
+1. `npm run gate:lint` exits zero with no warning.
+2. `npm run compiler:check` proves TypeScript 7.0.2 and `npm run gate:typecheck` exits zero.
+3. `npm run gate:unit` executes source and ESLint-rule suites without the E2E file.
+4. `npm run gate:e2e` executes `test/app.e2e-spec.ts` without Playwright.
+5. `npm run gate:coverage` executes the complete suite and enforces thresholds.
+6. `npm run gate:build` creates `dist/src/main.js` through TypeScript 7.
+7. `npm run gate:knowledge` proves manifests, routing, and corpus consistency.
+8. `npm run gate:security` reports no blocking finding.
 
 ## Workflow cases
 
 For each pull request, `main` push, and manual dispatch:
 
-- all seven expected jobs are created;
+- all eight expected jobs are created;
 - every job uses Node from `.nvmrc` and `npm ci`;
 - stale runs are cancelled per workflow/ref;
 - a failed command fails its job;
@@ -31,4 +32,4 @@ For each pull request, `main` push, and manual dispatch:
 
 ## Branch-protection cases
 
-After activation, verify pending/failing checks block merge and all seven green checks plus required review permit merge. Follow [`runbooks/github-required-checks.md`](../../runbooks/github-required-checks.md).
+After activation, verify pending/failing checks block merge and all eight green checks plus required review permit merge. Follow [`runbooks/github-required-checks.md`](../../runbooks/github-required-checks.md).

@@ -19,6 +19,11 @@ const BASE_VALIDATION = [
   'npm run build',
 ];
 const SECURITY_VALIDATION = [...BASE_VALIDATION, 'npm run security:scan'];
+const TOOLCHAIN_VALIDATION = [
+  ...BASE_VALIDATION,
+  'npm run gate:knowledge',
+  'npm run security:audit',
+];
 
 const REVIEWERS = {
   architect: 'agents/backend-architect.md',
@@ -29,12 +34,37 @@ const REVIEWERS = {
   reliability: 'agents/reliability-engineer.md',
   observability: 'agents/observability-reviewer.md',
   test: 'agents/backend-test-engineer.md',
+  release: 'agents/backend-release-gatekeeper.md',
 };
 
 // Lane scales artifact WEIGHT, never phase existence (claude.md delivery lanes).
 // critical = auth/permissions/injection/destructive-schema; standard = normal
 // feature/config/persistence work; fast = readability/cleanup/no-contract-change.
 export const ROUTING_MAP = [
+  {
+    id: 'upgrade-toolchain',
+    title: 'Upgrade packages, compiler, lint, or CI tooling',
+    keywords: [
+      'toolchain',
+      'package upgrade',
+      'upgrade packages',
+      'dependency upgrade',
+      'dependencies',
+      'typescript',
+      'compiler',
+      'eslint',
+      'github gates',
+      'ci gates',
+    ],
+    lane: 'standard',
+    rules: [
+      'rules/13-eslint-and-typescript.md',
+      'rules/27-no-token-burning-code.md',
+    ],
+    skills: ['skills/upgrade-toolchain-safely.md'],
+    reviewers: [REVIEWERS.release],
+    validation: TOOLCHAIN_VALIDATION,
+  },
   {
     id: 'scaffold-module',
     title: 'Scaffold a feature module',

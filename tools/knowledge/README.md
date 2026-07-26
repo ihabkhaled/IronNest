@@ -10,6 +10,7 @@ Built as an internal tool that follows the same house convention as [`eslint/arc
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `npm run knowledge:build`                 | Regenerates the 4 manifests + `BOOTSTRAP.md` under `.ai/`. Run this after changing any `src/` or doc file.                                                 |
 | `npm run knowledge:check`                 | Fails if the committed manifests are stale vs. the working tree. Wired into `npm run validate` and CI (`gate-knowledge.yml`).                              |
+| `npm run gate:knowledge`                  | Runs staleness, integrity/link verification, and token-budget benchmarks exactly as CI and pre-push do.                                                    |
 | `npm run knowledge:context -- --task="…"` | Ranks the exact rules/skills/source relevant to a task → `.ai/local/current-context.{json,md}`. Also accepts `--files=a.ts,b.ts` and `--diff=base...head`. |
 
 ## Files
@@ -32,3 +33,4 @@ Built as an internal tool that follows the same house convention as [`eslint/arc
 - `.ai/local/` is per-run resolver output and is gitignored.
 - The generator is deterministic: repeated runs against unchanged source produce byte-identical manifests (the `generatedAt` field is informational and excluded from the staleness comparison).
 - What this deliberately does **not** do (documented, not accidental): AST-based symbol typing, semantic/embedding retrieval, file-watching, static per-task-type packs, and call/contract/event/deployment graphs. See `docs/features/knowledge-acceleration-plane/06-technical-refinement.md` for the reasoning — each was declined because this is a 115-source-file repo where regex-on-existing-conventions is sufficient, or describes a subsystem that does not exist here yet (there is no event bus, no IaC, no on-disk OpenAPI).
+- Toolchain work has a curated `upgrade-toolchain` context pack. Use `npm run knowledge:context -- --task="upgrade packages and TypeScript compiler"` instead of loading the full documentation corpus.

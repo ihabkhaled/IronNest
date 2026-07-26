@@ -33,7 +33,4 @@ jobs:
         run: npm ci
 
       - name: Run Lint Gate
-        run: npm run lint
-
-      - name: Check Formatting
-        run: npm run format:check
+        run: npm run gate:lint

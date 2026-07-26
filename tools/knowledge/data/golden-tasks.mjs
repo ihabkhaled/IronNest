@@ -8,6 +8,16 @@
 
 export const GOLDEN_TASKS = [
   {
+    id: 'upgrade-toolchain',
+    task: 'upgrade packages and prove the TypeScript 7 compiler in CI',
+    expectLane: 'standard',
+    mustInclude: [
+      'rules/13-eslint-and-typescript.md',
+      'skills/upgrade-toolchain-safely.md',
+      'agents/backend-release-gatekeeper.md',
+    ],
+  },
+  {
     id: 'guard-on-controller',
     task: 'add a guard to a controller to check permissions',
     expectLane: 'critical',

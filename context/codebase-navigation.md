@@ -157,7 +157,7 @@ npm run test:coverage   # 95% statements/functions/lines; 90% measured branches;
 npm run build           # compiles clean
 ```
 
-Husky enforces a subset automatically: **pre-commit** runs lint-staged + typecheck, **commit-msg** runs commitlint (Conventional Commits), **pre-push** runs test:coverage + build. Never bypass with `--no-verify`. A green build is necessary, not sufficient — prove behavior with tests and walk the [review checklist](../rules/15-review-checklist.md).
+Husky enforces the canonical package-script gates automatically: **pre-commit** runs `gate:commit` (lint-staged + project typecheck), **commit-msg** runs commitlint (Conventional Commits), and **pre-push** runs `gate:push` (coverage + TypeScript 7 build + knowledge integrity). Never bypass with `--no-verify`. A green build is necessary, not sufficient — prove behavior with tests and walk the [review checklist](../rules/15-review-checklist.md).
 
 ---
 

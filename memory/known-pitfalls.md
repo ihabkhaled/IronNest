@@ -222,7 +222,13 @@ See [04-repositories-and-persistence.md](../rules/04-repositories-and-persistenc
 
 - **Symptom:** the pre-commit gate blocks your commit on errors in unrelated files.
 - **Cause:** lint-staged scopes ESLint to staged files, but `npm run typecheck` (TypeScript 7 `tsc --noEmit`) runs across the **whole** project.
-- **Fix:** fix the pre-existing breakage as part of your change; never add a suppression or bypass with `--no-verify`. Husky pre-commit runs lint-staged + typecheck; pre-push runs test:coverage + the TypeScript 7 build. See [13-eslint-and-typescript.md](../rules/13-eslint-and-typescript.md) and [quality-gates.md](../testing/quality-gates.md).
+- **Fix:** fix the pre-existing breakage as part of your change; never add a suppression or bypass with `--no-verify`. Husky pre-commit runs `gate:commit`; pre-push runs `gate:push` (coverage + the TypeScript 7 build + knowledge integrity). See [13-eslint-and-typescript.md](../rules/13-eslint-and-typescript.md) and [quality-gates.md](../testing/quality-gates.md).
+
+### I1a. A bare `tsc` resolves the compatibility compiler
+
+- **Symptom:** a local shell or newly added script prints a TypeScript 6 version even though builds are required to use TypeScript 7.
+- **Cause:** this repository intentionally installs the official TypeScript 6 compatibility package beside `@typescript/native`; package-manager binary resolution is easy to make ambiguous.
+- **Fix:** scripts must invoke `node_modules/@typescript/native/bin/tsc` explicitly and run `npm run compiler:check`. Import compiler APIs only from the `typescript` compatibility package. Never swap aliases or infer the build compiler from an editor.
 
 ### I2. Stale compiled `.js` next to `.ts` sources
 
@@ -241,6 +247,13 @@ See [04-repositories-and-persistence.md](../rules/04-repositories-and-persistenc
 - **Symptom:** npm resolution looks green after a peer range is manually broadened, but lint or build fails because a tool calls a compiler API that is not present.
 - **Cause:** lockfile dependency/peer metadata only influences resolution; it cannot restore missing runtime APIs or make an unsupported package compatible.
 - **Fix:** restore generated lockfile metadata and use the vendor-supported migration or compatibility package. Never use an `.npmrc` legacy-peer bypass, `--force`, or `--legacy-peer-deps`. Prove the real toolchain with clean `npm ci --dry-run`, lint, typecheck, and build runs.
+
+### I5. A patched package major sits outside a framework peer range
+
+- **Symptom:** the scanner offers a fixed major, but
+  pm install reports a peer conflict from the framework adapter.
+- **Cause:** the security fix and framework integration were released on different schedules; install success does not prove runtime compatibility.
+- **Fix:** prefer a vendor-supported peer range. When an optional transitive peer is security-vulnerable and runtime-tested, use one exact root override, document it, and require audit, Trivy, and E2E proof. Never use `--force`, `--legacy-peer-deps`, or a hand-edited lockfile. Current example: Nest 11.1.28's optional static peer is overridden to patched 10.1.2.
 
 ---
 

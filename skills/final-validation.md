@@ -78,14 +78,15 @@ If an unrelated cleanup is genuinely worth keeping, stage and commit it **separa
 
 ### 5. Run every quality gate
 
-These are the same commands the Husky hooks run (`pre-commit` = lint-staged + typecheck; `pre-push` = test:coverage + build). Run them yourself so failures surface here, not in the hook. Run **all** of them — a passing typecheck says nothing about coverage.
+These commands are exposed through the same canonical `gate:*` contracts used by Husky and CI (`pre-commit` = `gate:commit`; `pre-push` = `gate:push`). Run them yourself so failures surface here, not in the hook. Run **all** of them — a passing typecheck says nothing about coverage.
 
 ```bash
 npm run lint            # 0 errors AND 0 warnings
-npm run typecheck       # tsc --noEmit (TypeScript 7), project-wide
+npm run typecheck       # verifies and runs the native TypeScript 7 CLI, project-wide
 npm run test            # vitest
 npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
-npm run build           # compiles clean
+npm run build           # verifies and compiles with the native TypeScript 7 CLI
+npm run gate:knowledge  # AI manifests, routing, and token budgets are current
 ```
 
 Fix every failure at the **root cause**. Never silence a gate with `eslint-disable`, `@ts-ignore`, a non-null assertion, a weakened threshold, or a skipped test ([rules 3–7](../rules/00-non-negotiable-rules.md)). See [/skills/fix-eslint-typecheck.md](./fix-eslint-typecheck.md).
@@ -127,10 +128,11 @@ The subject must be intent-revealing — no `update`, `fix stuff`, `wip`, or `mi
 
 ```bash
 npm run lint            # 0 errors AND 0 warnings
-npm run typecheck       # tsc --noEmit (TypeScript 7), project-wide
+npm run typecheck       # verifies and runs the native TypeScript 7 CLI, project-wide
 npm run test            # vitest
 npm run test:coverage   # statements/functions/lines ≥95%; measured branches ≥90%; real critical branches ~100%
-npm run build           # compiles clean
+npm run build           # verifies and compiles with the native TypeScript 7 CLI
+npm run gate:knowledge  # AI manifests, routing, and token budgets are current
 ```
 
 Every gate must be green before you commit, and again (via `pre-push`) before you push. A green run is the floor, not the ceiling — only declare "done" once behavior is proven, docs are updated, and remaining risks are explicit.

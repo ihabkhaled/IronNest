@@ -4,5 +4,6 @@ Use this folder for support enablement, escalation guidance, FAQs, known issues,
 
 - [simple-readable-code-operating-system-implementation.md](./simple-readable-code-operating-system-implementation.md) — auth/config/ownership expected behavior and triage.
 - [github-workflows-and-gates.md](./github-workflows-and-gates.md) — merge-gate expectations, failure routing, and prohibited bypasses.
+- [toolchain-strictness-and-ai-routing.md](./toolchain-strictness-and-ai-routing.md) — TypeScript 7, strict gates, generated AI context, and engine triage.
 - [support-readiness-template.md](./support-readiness-template.md) — reusable support handoff template.
 - [known-issues-template.md](./known-issues-template.md) — reusable known-issues template.

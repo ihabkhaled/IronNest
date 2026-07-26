@@ -2,13 +2,14 @@
 
 > The complete lint + type gate and how to pass it. This file implements the canon: every rule below maps to a layer rule, an architecture boundary, or a strict compiler flag. When this doc and the config disagree, **the config wins** — then fix this doc.
 
-**Zero-tolerance gate.** `npm run lint` MUST print **0 errors AND 0 warnings**; `npm run typecheck` (`tsc --pretty --noEmit --incremental false`) MUST pass — both before any commit. Husky enforces them (`pre-commit` → `lint-staged` + `typecheck`; `pre-push` → `test:coverage` + `build`). **Never** silence a finding. No `// eslint-disable*`, no `@ts-ignore`. `@ts-expect-error` is allowed only with a ≥5-char justification (`ban-ts-comment: allow-with-description`) recorded in a linked decision file. See [00-non-negotiable-rules.md](./00-non-negotiable-rules.md) rules 1–7. Every _sanctioned_ relaxation (the test-file loosenings below, the 90% branch floor, the lint-scope exclusions) is indexed in the [exceptions register](../docs/sdlc/exceptions-register.md) — an unrecorded relaxation is a defect, not an exception.
+**Zero-tolerance gate.** `npm run lint` uses `--max-warnings 0 --report-unused-disable-directives` and MUST print **0 errors AND 0 warnings**; `npm run typecheck` MUST pass through the explicit TypeScript 7 native binary. Husky enforces the shared scripts (`pre-commit` → `gate:commit`; `pre-push` → `gate:push`). **Never** silence a finding. No `// eslint-disable*`, no `@ts-ignore`. `@ts-expect-error` is allowed only with a ≥5-char justification (`ban-ts-comment: allow-with-description`) recorded in a linked decision file. See [00-non-negotiable-rules.md](./00-non-negotiable-rules.md) rules 1–7. Every _sanctioned_ relaxation (the test-file loosenings below, the 90% branch floor, the lint-scope exclusions) is indexed in the [exceptions register](../docs/sdlc/exceptions-register.md) — an unrecorded relaxation is a defect, not an exception.
 
 ```bash
 npm run lint        # eslint .            → must be 0/0
 npm run lint:fix    # eslint . --fix      → autofix mechanical issues (sort/format/unused)
-npm run typecheck   # TypeScript 7 tsc    → native type check, project-wide
-npm run build       # TypeScript 7 tsc    → emit with tsconfig.build.json
+npm run compiler:check # prove package-pinned TypeScript 7 native CLI ownership
+npm run typecheck   # explicit TypeScript 7 native binary, project-wide
+npm run build       # explicit TypeScript 7 native binary, build config
 ```
 
 ## TypeScript 7 side-by-side ownership

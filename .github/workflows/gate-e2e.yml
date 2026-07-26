@@ -33,4 +33,4 @@ jobs:
         run: npm ci
 
       - name: Run Backend E2E Gate
-        run: npm run test:e2e
+        run: npm run gate:e2e

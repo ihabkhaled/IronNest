@@ -30,12 +30,12 @@ Everything here is **100% broad and abstract for any NestJS backend** — modula
 
 ### Tooling kit (drop-in configs, exact pins)
 
-Root-level, ready to copy into any NestJS project: [`package.json`](./package.json), [`.nvmrc`](./.nvmrc), [`tsconfig.json`](./tsconfig.json) / [`tsconfig.eslint.json`](./tsconfig.eslint.json) / [`tsconfig.build.json`](./tsconfig.build.json), [`eslint.config.mjs`](./eslint.config.mjs), [`.prettierrc`](./.prettierrc), [`.lintstagedrc.cjs`](./.lintstagedrc.cjs), [`commitlint.config.cjs`](./commitlint.config.cjs), [`vitest.config.mts`](./vitest.config.mts), [`nest-cli.json`](./nest-cli.json), [`.husky/`](./.husky) (pre-commit, commit-msg, pre-push), [`.github/`](./.github) (seven clean-environment gates + Dependabot), [`.env.example`](./.env.example), and [`.editorconfig`](./.editorconfig).
+Root-level, ready to copy into any NestJS project: [`package.json`](./package.json), [`.nvmrc`](./.nvmrc), [`tsconfig.json`](./tsconfig.json) / [`tsconfig.eslint.json`](./tsconfig.eslint.json) / [`tsconfig.build.json`](./tsconfig.build.json), [`eslint.config.mjs`](./eslint.config.mjs), [`.prettierrc`](./.prettierrc), [`.lintstagedrc.cjs`](./.lintstagedrc.cjs), [`commitlint.config.cjs`](./commitlint.config.cjs), [`vitest.config.mts`](./vitest.config.mts), [`nest-cli.json`](./nest-cli.json), [`.husky/`](./.husky) (pre-commit, commit-msg, pre-push), [`.github/`](./.github) (eight clean-environment gates + Dependabot), [`.env.example`](./.env.example), and [`.editorconfig`](./.editorconfig).
 
 ### Runtime and TypeScript ownership
 
 - Node.js **24.18.0 LTS** and npm **>=11.16.0**.
-- `@typescript/native` (`npm:typescript@7.0.2`) supplies the default `tsc` used by `npm run typecheck` and `npm run build`.
+- `@typescript/native` (`npm:typescript@7.0.2`) supplies the CLI invoked explicitly by `npm run typecheck` and `npm run build`; `npm run compiler:check` proves its version before either gate runs.
 - The package named `typescript` (`npm:@typescript/typescript6@6.0.2`) supplies only the compatibility compiler API required by Nest CLI, typescript-eslint, SonarJS, ts-node, and similar tools.
 
 This is Microsoft's official TypeScript 7 side-by-side migration, not a downgrade. `@typescript/native-preview` is removed; no `.npmrc` legacy-peer bypass, `--force`, `--legacy-peer-deps`, or hand-edited lockfile metadata is used.
@@ -87,7 +87,7 @@ Keep every gate green: `npm run validate && npm run security:audit && npm run se
 
 ### GitHub merge gates
 
-Pull requests and pushes to `main` run seven independent checks: `lint`, `typecheck`, `test:unit`, `test:e2e`, `test:coverage`, `build`, and `security:scan`. The E2E gate uses Nest/Fastify/Supertest; this backend has no Playwright dependency. Workflow ownership and required-check setup are documented in [`.github/README.md`](./.github/README.md) and [`runbooks/github-required-checks.md`](./runbooks/github-required-checks.md).
+Pull requests and pushes to `main` run eight independent checks: `lint`, `typecheck`, `test:unit`, `test:e2e`, `test:coverage`, `build`, `knowledge`, and `security:scan`. Workflows and hooks call the same public `gate:*` scripts. The E2E gate uses Nest/Fastify/Supertest; this backend has no Playwright dependency. Workflow ownership and required-check setup are documented in [`.github/README.md`](./.github/README.md) and [`runbooks/github-required-checks.md`](./runbooks/github-required-checks.md).
 
 **Build your own feature**
 

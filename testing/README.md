@@ -175,12 +175,12 @@ Full gate (must all be green before "done") — see [quality-gates.md](./quality
 
 ```bash
 npm run lint            # 0 errors AND 0 warnings
-npm run typecheck       # tsc --noEmit, TypeScript 7, project-wide
+npm run typecheck       # verified native TypeScript 7 CLI, project-wide
 npm run test            # vitest
 npm run test:coverage   # coverage thresholds met
 npm run build           # compiles clean
 ```
 
-`pre-push` runs `test:coverage` + `build`; never bypass it. A green build is **not** proof of correctness — walk the [review checklist](../rules/15-review-checklist.md).
+`pre-push` runs the shared `gate:push` contract (coverage + native TypeScript 7 build + knowledge integrity); never bypass it. A green build is **not** proof of correctness — walk the [review checklist](../rules/15-review-checklist.md).
 
 **Related:** [testing-strategy.md](./testing-strategy.md) · [coverage-policy.md](./coverage-policy.md) · [quality-gates.md](./quality-gates.md) · [bug-triage-and-retest.md](./bug-triage-and-retest.md) · [/rules/11-testing-and-coverage.md](../rules/11-testing-and-coverage.md) · [/skills/write-unit-tests.md](../skills/write-unit-tests.md) · [/skills/write-integration-tests.md](../skills/write-integration-tests.md) · [/skills/write-e2e-tests.md](../skills/write-e2e-tests.md) · [/skills/final-validation.md](../skills/final-validation.md)

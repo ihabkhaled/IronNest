@@ -69,6 +69,16 @@ describe('mergePack', () => {
     const pack = mergePack('split an oversized service that is too large');
     expect(pack.lane).toBe('fast');
   });
+
+  it('routes package and compiler upgrades to the toolchain pack', () => {
+    const pack = mergePack(
+      'upgrade packages and prove the TypeScript 7 compiler in CI',
+    );
+    expect(pack.matchedTaskTypes).toContain('upgrade-toolchain');
+    expect(pack.rules).toContain('rules/13-eslint-and-typescript.md');
+    expect(pack.skills).toContain('skills/upgrade-toolchain-safely.md');
+    expect(pack.validation).toContain('npm run gate:knowledge');
+  });
 });
 
 describe('routing-map integrity', () => {

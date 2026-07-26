@@ -4,19 +4,20 @@
 
 A gate is **binary**: it passes or it blocks. There is no "mostly passes," no "passes with caveats," no "we'll fix it after launch." A red gate blocks merge and release until it turns green and is re-verified. Every gate exists because a specific class of defect escaped without it.
 
-## The seven CI gates
+## The eight CI gates
 
-| #   | Gate              | Command                 | Proves                                                      | Blocks              |
-| --- | ----------------- | ----------------------- | ----------------------------------------------------------- | ------------------- |
-| 1   | Lint + format     | `npm run lint` + format | 0 errors/warnings; architecture and formatting upheld       | commit, push, merge |
-| 2   | Type check        | `npm run typecheck`     | full strict TypeScript contracts are clean                  | commit, push, merge |
-| 3   | Unit/static tests | `npm run test:unit`     | source and custom ESLint-rule suites are green              | push, merge         |
-| 4   | Backend E2E       | `npm run test:e2e`      | Nest/Fastify/Supertest production wiring works              | push, merge         |
-| 5   | Coverage          | `npm run test:coverage` | statements/functions/lines ≥ 95%, branches ≥ 90%            | push, merge         |
-| 6   | Build             | `npm run build`         | production artifact compiles cleanly                        | push, merge, deploy |
-| 7   | Security          | audit + Trivy + review  | dependencies, secrets, misconfig, and judgment checks clear | merge, deploy       |
+| #   | Gate              | Command                  | Proves                                                       | Blocks              |
+| --- | ----------------- | ------------------------ | ------------------------------------------------------------ | ------------------- |
+| 1   | Lint + format     | `npm run gate:lint`      | 0 errors/warnings; architecture and formatting upheld        | commit, push, merge |
+| 2   | Type check        | `npm run gate:typecheck` | full strict TypeScript contracts are clean                   | commit, push, merge |
+| 3   | Unit/static tests | `npm run gate:unit`      | source and custom policy suites are green                    | push, merge         |
+| 4   | Backend E2E       | `npm run gate:e2e`       | Nest/Fastify/Supertest production wiring works               | push, merge         |
+| 5   | Coverage          | `npm run gate:coverage`  | statements/functions/lines ≥ 95%, branches ≥ 90%             | push, merge         |
+| 6   | Build             | `npm run gate:build`     | production artifact compiles through the proven TS7 CLI      | push, merge, deploy |
+| 7   | Knowledge         | `npm run gate:knowledge` | generated context, routes, and corpus invariants are current | push, merge         |
+| 8   | Security          | `npm run gate:security`  | dependencies, secrets, misconfig, and judgment checks clear  | merge, deploy       |
 
-All seven checks are automated in GitHub Actions using authoritative npm scripts. Gate 7 also retains the structured human/agent review in [/skills/security-review.md](../skills/security-review.md) whenever a change touches auth, permissions, secrets, data access, file handling, or an external boundary.
+All eight checks are automated in GitHub Actions using authoritative `gate:*` npm scripts. Gate 8 also retains the structured human/agent review in [/skills/security-review.md](../skills/security-review.md) whenever a change touches auth, permissions, secrets, data access, file handling, or an external boundary.
 
 ## What each gate proves
 
@@ -39,12 +40,12 @@ The ESLint flat config bundles `strictTypeChecked` + `stylisticTypeChecked`, sec
 ### Gate 2 — Type check (`npm run typecheck`)
 
 ```bash
-npm run typecheck   # tsc --pretty --noEmit --incremental false
+npm run typecheck   # explicit @typescript/native binary after compiler:check
 ```
 
 Project-wide type check with every strict flag on (`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitReturns`, `useUnknownInCatchVariables`, …). A failure means a contract between layers is broken: a DTO no longer matches its consumer, a new enum member left a `switch` non-exhaustive, a nullable was not handled.
 
-The default `tsc` comes from `@typescript/native` (`npm:typescript@7.0.2`). The package named `typescript` is the TypeScript 6 compatibility API (`npm:@typescript/typescript6@6.0.2`) for lint/tool consumers and does not own this gate.
+The gate explicitly invokes `@typescript/native/bin/tsc` (`npm:typescript@7.0.2`) after `compiler:check`. The package named `typescript` is the TypeScript 6 compatibility API (`npm:@typescript/typescript6@6.0.2`) for lint/tool consumers and does not own this gate.
 
 **Pass criteria:** zero TypeScript 7 errors. This command type-checks only — it never executes `.ts` and never emits.
 
@@ -77,14 +78,20 @@ Coverage thresholds: statements/functions/lines at the **95%** workspace floor, 
 ### Gate 6 — Build (`npm run build`)
 
 ```bash
-npm run build       # tsc -p tsconfig.build.json
+npm run build       # explicit @typescript/native binary + tsconfig.build.json
 ```
 
 Uses the TypeScript 7 native CLI and produces the deployable artifact in `dist/`. Catches problems type-check and tests can miss: a broken runtime import, a circular dependency, a misconfigured module, a dependency missing from `dependencies`. The artifact that builds clean is the artifact promoted to production.
 
-### Gate 7 — Security scan and review
+### Gate 7 — Knowledge integrity
 
-CI runs `npm run security:audit` and the blocking Trivy `npm run security:scan`, then uploads SARIF. A structured pass against [/rules/07-security-authn-authz.md](../rules/07-security-authn-authz.md), [/rules/08-database-and-injection-safety.md](../rules/08-database-and-injection-safety.md), and [/rules/14-observability-and-logging.md](../rules/14-observability-and-logging.md) remains mandatory for judgment calls.
+`npm run gate:knowledge` checks generated manifest hashes, repository
+contradictions, and the golden task-routing benchmark. Generated `.ai` drift,
+broken rule/skill paths, or a lost curated pack blocks merge.
+
+### Gate 8 — Security scan and review
+
+CI runs `npm run gate:security` (audit plus blocking Trivy), then uploads SARIF. A structured pass against [/rules/07-security-authn-authz.md](../rules/07-security-authn-authz.md), [/rules/08-database-and-injection-safety.md](../rules/08-database-and-injection-safety.md), and [/rules/14-observability-and-logging.md](../rules/14-observability-and-logging.md) remains mandatory for judgment calls.
 
 **Pass criteria (when in scope):** every protected route chains auth guard + permissions guard + ownership/tenant check; identity comes from the verified token, never the client body; queries are parameterized and bounded; no secrets/PII/stack traces leak to clients or logs. No unresolved critical/high finding ships without a written, approved waiver.
 
@@ -92,19 +99,19 @@ CI runs `npm run security:audit` and the blocking Trivy `npm run security:scan`,
 
 Hooks live in [`.husky/`](../.husky) and run the **same scripts** as CI, so a clean local pass predicts a clean pipeline.
 
-| Hook         | Runs                                                   | Why here                                                                       |
-| ------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `pre-commit` | `lint-staged` (eslint `--fix` on staged) + `typecheck` | catch violations before they enter history; fast feedback on staged files      |
-| `commit-msg` | `commitlint` (Conventional Commits)                    | enforce machine-readable, traceable history                                    |
-| `pre-push`   | `test:coverage` + `build`                              | nothing reaches the remote without green tests, coverage, and a valid artifact |
+| Hook         | Runs                                            | Why here                                                                      |
+| ------------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
+| `pre-commit` | `gate:commit` (staged lint + project typecheck) | catch violations before they enter history; fast feedback on staged files     |
+| `commit-msg` | `commitlint` (Conventional Commits)             | enforce machine-readable, traceable history                                   |
+| `pre-push`   | `gate:push` (coverage + build + knowledge)      | nothing reaches the remote without tested code and current generated guidance |
 
 The split is deliberate: cheap checks (lint-staged, typecheck) gate every commit; the slower full test + coverage + build gate the push. `lint-staged` ([`.lintstagedrc.cjs`](../.lintstagedrc.cjs)) lints and re-stages only changed files for speed; the project-wide `typecheck` still runs because a staged change can break an unstaged file.
 
 ```jsonc
 // Conceptual hook flow — do NOT bypass with --no-verify
-// pre-commit  : lint-staged  &&  npm run typecheck
+// pre-commit  : npm run gate:commit
 // commit-msg  : commitlint --edit "$1"
-// pre-push    : npm run test:coverage  &&  npm run build
+// pre-push    : npm run gate:push
 ```
 
 Hooks install on `npm install` (Husky `prepare`). If a fresh clone shows no enforcement, run the install step before committing.
@@ -122,6 +129,7 @@ required-checks:
   - test:e2e
   - test:coverage
   - build
+  - knowledge
   - security:scan
 ```
 
@@ -132,7 +140,8 @@ The workflows live under [`.github/workflows`](../.github/workflows), and exact 
 Do — fix at the root and re-run the full gate set:
 
 ```bash
-npm run validate && npm run test:e2e && npm run security:audit && npm run security:scan
+npm run validate
+npm run gate:security
 ```
 
 Don't — bypass, suppress, or weaken a gate:
@@ -177,6 +186,7 @@ A change is gate-approved only when all gates are green in a single, uninterrupt
 - [ ] `npm run test:e2e` — backend HTTP suite passes without Playwright
 - [ ] `npm run test:coverage` — statements/functions/lines ≥95%, measured branches ≥90%, all real changed branches covered
 - [ ] `npm run build` — compiles clean to `dist/`
+- [ ] `npm run gate:knowledge` — generated context, routing benchmark, and contradictions are clean
 - [ ] `npm run security:audit` and `npm run security:scan` pass; human security review is cleared for the change's risk
 - [ ] Husky hooks ran (no `--no-verify`); CI required jobs green
 - [ ] Tests and docs updated in the same change; behavior changes called out

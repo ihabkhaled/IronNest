@@ -13,7 +13,7 @@ Activate and maintain IronNest merge gates without creating a lockout or allowin
 
 ## Required check names
 
-Require all seven:
+Require all eight:
 
 1. `lint`
 2. `typecheck`
@@ -21,14 +21,15 @@ Require all seven:
 4. `test:e2e`
 5. `test:coverage`
 6. `build`
-7. `security:scan`
+7. `knowledge`
+8. `security:scan`
 
 ## Activation
 
 1. Open repository Settings → Rules → Rulesets (preferred) or Branches → Branch protection.
 2. Target the `main` branch.
 3. Require a pull request before merging.
-4. Require status checks to pass and select the seven names above.
+4. Require status checks to pass and select the eight names above.
 5. Require branches to be up to date before merging.
 6. Block force pushes and branch deletion.
 7. Do not permit bypass for ordinary contributor or agent workflows.
@@ -40,7 +41,7 @@ Do not guess check names before their first remote run; GitHub only offers check
 
 Use a pull request that changes documentation only:
 
-1. Confirm all seven checks start.
+1. Confirm all eight checks start.
 2. Confirm each check links to its own workflow/job logs.
 3. Confirm merge is blocked while a check is pending.
 4. Confirm merge is blocked when a check fails.

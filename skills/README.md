@@ -65,13 +65,14 @@ Skills are procedures, not policy. When a skill and a rule appear to disagree, t
 
 ### Test & verify — prove the thing works
 
-| Skill                                                      | Use when you need to…                                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [write-unit-tests.md](./write-unit-tests.md)               | Write Vitest 4 + @nestjs/testing unit tests for services, use cases, domain, and guards.    |
-| [write-integration-tests.md](./write-integration-tests.md) | Test a real module wiring (repository + DB or adapter) against representative state.        |
-| [write-e2e-tests.md](./write-e2e-tests.md)                 | Drive a route end-to-end through the HTTP boundary with `supertest` and a booted test app.  |
-| [fix-eslint-typecheck.md](./fix-eslint-typecheck.md)       | Drive `npm run lint` and `npm run typecheck` to zero — by root cause, never by suppression. |
-| [final-validation.md](./final-validation.md)               | Run the final diff review, git-safety, and full quality-gate sweep before commit/push.      |
+| Skill                                                        | Use when you need to…                                                                       |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| [write-unit-tests.md](./write-unit-tests.md)                 | Write Vitest 4 + @nestjs/testing unit tests for services, use cases, domain, and guards.    |
+| [write-integration-tests.md](./write-integration-tests.md)   | Test a real module wiring (repository + DB or adapter) against representative state.        |
+| [write-e2e-tests.md](./write-e2e-tests.md)                   | Drive a route end-to-end through the HTTP boundary with `supertest` and a booted test app.  |
+| [fix-eslint-typecheck.md](./fix-eslint-typecheck.md)         | Drive `npm run lint` and `npm run typecheck` to zero — by root cause, never by suppression. |
+| [upgrade-toolchain-safely.md](./upgrade-toolchain-safely.md) | Upgrade packages/compiler/lint/CI through official compatibility paths and shared gates.    |
+| [final-validation.md](./final-validation.md)                 | Run the final diff review, git-safety, and full quality-gate sweep before commit/push.      |
 
 ### Review — harden the thing
 
@@ -120,17 +121,17 @@ All must be **green** before you are done. Commands come straight from `package.
 
 ```bash
 npm run lint            # eslint — 0 errors AND 0 warnings (zero tolerance)
-npm run typecheck       # tsc --noEmit, TypeScript 7, project-wide
+npm run typecheck       # explicit TypeScript 7 native binary, project-wide
 npm run test            # vitest run
 npm run test:coverage   # 95% statements/functions/lines; 90% measured branches; real changed branches covered
-npm run build           # tsc -p tsconfig.build.json — compiles clean
+npm run build           # explicit TypeScript 7 native binary — compiles clean
 ```
 
 Husky enforces a subset automatically:
 
-- **pre-commit** → `lint-staged` (eslint --fix on staged) + `typecheck` (project-wide).
+- **pre-commit** → `gate:commit` (staged zero-warning lint + project-wide typecheck).
 - **commit-msg** → `commitlint` (Conventional Commits).
-- **pre-push** → `test:coverage` + `build`.
+- **pre-push** → `gate:push` (coverage + build + knowledge integrity).
 
 Never bypass hooks with `--no-verify`, and never silence a gate with `eslint-disable`, `@ts-ignore`, or `@ts-expect-error`. Fix the root cause. The pre-commit typecheck is project-wide, so a pre-existing error in a file you never touched can block your commit — clean it up or call it out explicitly.
 
@@ -138,14 +139,14 @@ Never bypass hooks with `--no-verify`, and never silence a gate with `eslint-dis
 
 ## Toolchain
 
-| Concern    | Tool                                                   | Command                                                           | Contract                |
-| ---------- | ------------------------------------------------------ | ----------------------------------------------------------------- | ----------------------- |
-| Type-check | **TypeScript 7.0.2 native CLI** (`@typescript/native`) | `npm run typecheck` → `tsc --pretty --noEmit --incremental false` | Project-wide, no emit   |
-| Build      | **TypeScript 7.0.2 native CLI** (`@typescript/native`) | `npm run build` → `tsc -p tsconfig.build.json`                    | Emits only to `dist/`   |
-| Tests      | **Vitest 4** + `@nestjs/testing` + `supertest`         | `npm run test` → `vitest run`                                     | No Jest/ts-jest         |
-| Coverage   | Vitest + V8 provider                                   | `npm run test:coverage`                                           | No nyc/c8               |
-| Lint       | **ESLint 10** flat config + architecture plugin        | `npm run lint` → `eslint`                                         | 0 errors and 0 warnings |
-| Format     | **Prettier 3** (via ESLint)                            | `npm run format`                                                  | No manual reflow        |
+| Concern    | Tool                                                   | Command                                                             | Contract                |
+| ---------- | ------------------------------------------------------ | ------------------------------------------------------------------- | ----------------------- |
+| Type-check | **TypeScript 7.0.2 native CLI** (`@typescript/native`) | `npm run typecheck` → explicit native binary after `compiler:check` | Project-wide, no emit   |
+| Build      | **TypeScript 7.0.2 native CLI** (`@typescript/native`) | `npm run build` → explicit native binary + build config             | Emits only to `dist/`   |
+| Tests      | **Vitest 4** + `@nestjs/testing` + `supertest`         | `npm run test` → `vitest run`                                       | No Jest/ts-jest         |
+| Coverage   | Vitest + V8 provider                                   | `npm run test:coverage`                                             | No nyc/c8               |
+| Lint       | **ESLint 10** flat config + architecture plugin        | `npm run lint` → `eslint`                                           | 0 errors and 0 warnings |
+| Format     | **Prettier 3** (via ESLint)                            | `npm run format`                                                    | No manual reflow        |
 
 The package named `typescript` is the TypeScript 6 compatibility API (`npm:@typescript/typescript6@6.0.2`) for tools that import it; it does not own typecheck or build. This is the official TypeScript 7 side-by-side migration. NestJS runs on **Fastify** by default; `@nestjs/platform-express` is installed so a project can switch platforms.
 

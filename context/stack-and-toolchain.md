@@ -5,7 +5,7 @@
 ## Runtime & language
 
 - **Node.js 24.18.0 LTS** (`engines.node >=24.18.0 <25`) with **npm >=11.16.0**.
-- **TypeScript 7.0.2 native CLI** — `@typescript/native` is the alias `npm:typescript@7.0.2` and owns the default `tsc` executable used by typecheck and build.
+- **TypeScript 7.0.2 native CLI** — `@typescript/native` is the alias `npm:typescript@7.0.2`; typecheck and build invoke its binary explicitly and run `compiler:check` first.
 - **TypeScript 6 compatibility API** — the package named `typescript` is the alias `npm:@typescript/typescript6@6.0.2` solely for Nest CLI, typescript-eslint, SonarJS, ts-node, and other tools that import the compiler API. It is not the language compiler or a downgrade.
 - **NestJS 11** on the **Fastify** platform (`@nestjs/platform-fastify`); `@nestjs/platform-express` is also installed so a project can switch platforms.
 
@@ -45,24 +45,26 @@ This is Microsoft's official TypeScript 7 side-by-side migration. `@typescript/n
 ## Commit & git-hook toolchain
 
 - **Husky 9** ([`.husky/`](../.husky)) git hooks:
-  - **pre-commit** → `lint-staged` (eslint --fix on staged) + `typecheck` (project-wide).
+  - **pre-commit** → `gate:commit` (`lint-staged` + project-wide `gate:typecheck`).
   - **commit-msg** → `commitlint` (Conventional Commits, [`commitlint.config.cjs`](../commitlint.config.cjs)).
-  - **pre-push** → `test:coverage` + `build`.
+  - **pre-push** → `gate:push` (`gate:coverage` + `gate:build` + `gate:knowledge`).
 - **lint-staged** ([`.lintstagedrc.cjs`](../.lintstagedrc.cjs)) — lint+fix only staged files, then re-stage.
 - Never bypass hooks (`--no-verify`) without a recorded, approved emergency exception (see the SDLC policy in [`/claude.md`](../claude.md)).
 
 ## npm scripts
 
-| Script                    | Command                                     | Purpose                              |
-| ------------------------- | ------------------------------------------- | ------------------------------------ |
-| `start:dev`               | `nest start --watch`                        | Dev server with reload               |
-| `build`                   | `tsc -p tsconfig.build.json`                | TypeScript 7 build to `dist/`        |
-| `start:prod`              | `node dist/src/main`                        | Run the compiled build               |
-| `typecheck`               | `tsc --pretty --noEmit --incremental false` | TypeScript 7 project-wide type check |
-| `lint` / `lint:fix`       | `eslint` / `eslint --fix`                   | Lint (0 errors/0 warnings)           |
-| `format` / `format:check` | `prettier --write .` / `--check .`          | Format / verify                      |
-| `test` / `test:watch`     | `vitest run` / `vitest`                     | Tests                                |
-| `test:coverage`           | `vitest run --coverage`                     | Tests + coverage gate                |
+| Script                    | Command                                                      | Purpose                              |
+| ------------------------- | ------------------------------------------------------------ | ------------------------------------ |
+| `start:dev`               | `nest start --watch`                                         | Dev server with reload               |
+| `compiler:check`          | `node tools/compiler/check-native-typescript.mjs`            | Prove the package-pinned TS7 CLI     |
+| `build`                   | explicit `@typescript/native/bin/tsc -p tsconfig.build.json` | TypeScript 7 build to `dist/`        |
+| `start:prod`              | `node dist/src/main`                                         | Run the compiled build               |
+| `typecheck`               | explicit `@typescript/native/bin/tsc --noEmit`               | TypeScript 7 project-wide type check |
+| `gate:*`                  | public package scripts                                       | Shared hook/CI entrypoints           |
+| `lint` / `lint:fix`       | `eslint` / `eslint --fix`                                    | Lint (0 errors/0 warnings)           |
+| `format` / `format:check` | `prettier --write .` / `--check .`                           | Format / verify                      |
+| `test` / `test:watch`     | `vitest run` / `vitest`                                      | Tests                                |
+| `test:coverage`           | `vitest run --coverage`                                      | Tests + coverage gate                |
 
 ## Security scanning (Trivy)
 
@@ -77,7 +79,7 @@ npm run lint            # 0 errors AND 0 warnings
 npm run typecheck       # tsc --noEmit, TypeScript 7, project-wide
 npm run test            # vitest
 npm run test:coverage   # coverage thresholds met
-npm run build           # tsc -p tsconfig.build.json, TypeScript 7
+npm run build           # explicit TypeScript 7 native CLI build
 npm run security:scan   # trivy: no HIGH/CRITICAL vulns, secrets, or misconfig
 ```
 
